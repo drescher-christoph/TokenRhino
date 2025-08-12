@@ -31,7 +31,6 @@ pragma solidity ^0.8.19;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
-import {OracleLib} from "./libraries/OracleLib.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract Presale is Ownable, ReentrancyGuard {
@@ -43,17 +42,20 @@ contract Presale is Ownable, ReentrancyGuard {
     error Presale__PresaleIsNotActive(PresaleState presaleState);
     error Presale__FeeTransferFailed();
     error Presale__NotEnoughEthSent();
-    error Presale__MaxContributionExceeded(address user, uint256 contribution, uint256 maxContribution);
-
-    ///////////////////
-    // types //////////
-    ///////////////////
-    using OracleLib for AggregatorV3Interface;
+    error Presale__MaxContributionExceeded(
+        address user,
+        uint256 contribution,
+        uint256 maxContribution
+    );
+    error Presale__NotFinalized();
+    error Presale__NoTokensToClaim();
+    error Presale__NotExpectedState(PresaleState expected, PresaleState actual);
+    error Presale__CLAIMING_FAILED();
 
     enum PresaleState {
         ACTIVE,
-        ENDED,
-        SOLD_OUT
+        CLAIMABLE,
+        REFUNDABLE
     }
 
     ///////////////////
@@ -74,6 +76,7 @@ contract Presale is Ownable, ReentrancyGuard {
     uint256 public immutable i_hardCapWei;
     uint256 public immutable i_softCapWei;
 
+    bool public s_finalized;
     string public s_tokenName;
     PresaleState public s_presaleState;
     uint256 public s_totalRaisedWei; //gross amount of wei raised in the presale
@@ -96,20 +99,35 @@ contract Presale is Ownable, ReentrancyGuard {
         _;
     }
 
-    modifier sentEnoughEth() {
+    modifier checkContributionLimits() {
         if (msg.value < i_minContributionWei) {
             revert Presale__NotEnoughEthSent();
         }
-        _;
-    }
-
-    modifier checkMaxContribution() {
-        if (i_maxContributionWei > 0 && s_contributedWei[msg.sender] + msg.value > i_maxContributionWei) {
+        if (
+            i_maxContributionWei > 0 &&
+            s_contributedWei[msg.sender] + msg.value > i_maxContributionWei
+        ) {
             revert Presale__MaxContributionExceeded(
                 msg.sender,
                 s_contributedWei[msg.sender] + msg.value,
                 i_maxContributionWei
             );
+        }
+        _;
+    }
+
+    modifier isFinalized(bool _finalized) {
+        _updateStatus();
+        if (s_finalized != _finalized) {
+            revert Presale__NotFinalized();
+        }
+        _;
+    }
+
+    modifier checkedState(PresaleState _state) {
+        _updateStatus();
+        if (s_presaleState != _state) {
+            revert Presale__NotExpectedState(_state, s_presaleState);
         }
         _;
     }
@@ -149,8 +167,10 @@ contract Presale is Ownable, ReentrancyGuard {
 
         i_startTime = block.timestamp;
         i_endTime = block.timestamp + 31 days;
-        s_presaleState = PresaleState.ACTIVE;
         i_TOKENS_PER_ETH = (i_tokensForSaleUnits * PRECISION) / i_hardCapWei;
+
+        s_presaleState = PresaleState.ACTIVE;
+        s_finalized = false;
     }
 
     ///////////////////////
@@ -165,8 +185,7 @@ contract Presale is Ownable, ReentrancyGuard {
         external
         payable
         presaleIsActive
-        sentEnoughEth
-        checkMaxContribution
+        checkContributionLimits
         nonReentrant
     {
         _updateStatus();
@@ -197,7 +216,27 @@ contract Presale is Ownable, ReentrancyGuard {
         }
     }
 
-    function claimTokens() external {}
+    /**
+     * @notice follow CEI (checks - effects - interactions) pattern
+     * @notice allows user to claim his bought tokens
+     */
+    function claimTokens()
+        external
+        isFinalized(true)
+        checkedState(PresaleState.CLAIMABLE)
+        nonReentrant
+    {
+        if (s_purchased[msg.sender] == 0) {
+            revert Presale__NoTokensToClaim();
+        }
+        uint256 userTokens = s_purchased[msg.sender];
+        s_purchased[msg.sender] = 0;
+
+        bool success = i_saleToken.transfer(msg.sender, userTokens);
+        if (!success) {
+            revert Presale__CLAIMING_FAILED();
+        }
+    }
 
     function withdrawFunds() external onlyOwner {}
 
@@ -208,20 +247,25 @@ contract Presale is Ownable, ReentrancyGuard {
     /////////////////////////////////////
 
     function _updateStatus() internal {
-        if (s_presaleState == PresaleState.ACTIVE) {
-            if (
-                block.timestamp >= i_endTime ||
-                s_totalSold >= i_tokensForSaleUnits
-            ) {
-                s_presaleState = PresaleState.ENDED;
-            }
-        }
+        if (s_finalized) return;
 
         if (
-            s_presaleState == PresaleState.ENDED &&
-            s_totalRaisedWei < i_hardCapWei
+            s_totalSold >= i_tokensForSaleUnits ||
+            s_totalRaisedWei >= i_hardCapWei
         ) {
-            s_presaleState = PresaleState.SOLD_OUT;
+            s_finalized = true;
+            s_presaleState = PresaleState.CLAIMABLE;
+            return;
+        }
+
+        // Normales Ende: Zeit vorbei -> Erfolg wenn SoftCap erreicht, sonst Refund
+        if (block.timestamp >= i_endTime) {
+            s_finalized = true;
+            if (s_totalRaisedWei >= i_softCapWei) {
+                s_presaleState = PresaleState.CLAIMABLE;
+            } else {
+                s_presaleState = PresaleState.REFUNDABLE;
+            }
         }
     }
 
@@ -232,4 +276,54 @@ contract Presale is Ownable, ReentrancyGuard {
     /////////////////////////////////////
     // Public & External View Functions//
     /////////////////////////////////////
+
+    function getPresaleState() external view returns (PresaleState) {
+        return s_presaleState;
+    }
+
+    function getPresaleDetails()
+        external
+        view
+        returns (
+            address,
+            string memory,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            PresaleState
+        )
+    {
+        return (
+            address(i_saleToken),
+            s_tokenName,
+            i_startTime,
+            i_endTime,
+            i_tokensForSaleUnits,
+            i_TOKENS_PER_ETH,
+            s_totalRaisedWei,
+            s_totalSold,
+            s_presaleState
+        );
+    }
+
+    function getUserContribution(
+        address user
+    ) external view returns (uint256 weiContributed, uint256 tokensPurchased) {
+        return (s_contributedWei[user], s_purchased[user]);
+    }
+
+    function getUserBoughtTokens(address user) external view returns (uint256) {
+        return s_purchased[user];
+    }
+
+    function getTokenPerETH() external view returns (uint256) {
+        return i_TOKENS_PER_ETH;
+    }
+
+    function getTotalRaisedWei() external view returns (uint256) {
+        return s_totalRaisedWei;
+    }
 }
