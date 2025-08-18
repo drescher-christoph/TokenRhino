@@ -139,7 +139,7 @@ contract PresaleTest is Test {
         presale.claimTokens();
         vm.stopPrank();
 
-        uint256 tokensPerEth = presale.getTokenPerETH(); 
+        uint256 tokensPerEth = presale.getTokenPerETH();
         uint256 expectedTokens = (INVESTMENT * 10 * tokensPerEth) / PRECISION;
 
         uint256 userBalance = token.balanceOf(USER2);
@@ -158,6 +158,29 @@ contract PresaleTest is Test {
         vm.expectRevert(Presale.Presale__NotFinalized.selector);
         presale.claimTokens();
         vm.stopPrank();
+    }
+
+    ////////////////////////////////////
+    // Withdraw Tests //////////////////
+    ////////////////////////////////////
+
+    function testWithdraw()
+        public
+        tokensBought(USER2, INVESTMENT * 10)
+        tokensBought(USER3, INVESTMENT * 10)
+        tokensBought(USER4, INVESTMENT * 10)
+    {
+        skip(32 * 24 * 60 * 60);
+        uint256 balanceBefore = address(presale).balance;
+        uint256 userBalanceBefore = address(USER).balance;
+        vm.startPrank(USER);
+        presale.withdrawFunds();
+        vm.stopPrank();
+
+        uint256 balanceAfter = address(presale).balance;
+        uint256 userBalanceAfter = address(USER).balance;
+        assertEq(balanceAfter, 0, "Balance after withdrawal has to be zero");
+        assertEq(userBalanceAfter, userBalanceBefore + balanceBefore, "Owner balance has to be withdrawal funds amount or more");
     }
 
     ////////////////////////////////////

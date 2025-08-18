@@ -29,6 +29,7 @@
 pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -51,12 +52,20 @@ contract Presale is Ownable, ReentrancyGuard {
     error Presale__NoTokensToClaim();
     error Presale__NotExpectedState(PresaleState expected, PresaleState actual);
     error Presale__CLAIMING_FAILED();
+    error Presale__NoFundsToWithdraw();
+    error Presale__WithdrawFailed();
 
     enum PresaleState {
         ACTIVE,
         CLAIMABLE,
         REFUNDABLE
     }
+
+    ///////////////////
+    // Types /////////
+    ///////////////////
+
+    using SafeERC20 for IERC20;
 
     ///////////////////
     // State Variables
@@ -88,6 +97,7 @@ contract Presale is Ownable, ReentrancyGuard {
     // Events /////////
     ///////////////////
     event TokensBought(address indexed buyer, uint256 amount);
+    event TokensClaimed(address indexed user, uint256 amount);
 
     ///////////////////
     // Modifier ///////
@@ -230,15 +240,37 @@ contract Presale is Ownable, ReentrancyGuard {
             revert Presale__NoTokensToClaim();
         }
         uint256 userTokens = s_purchased[msg.sender];
+        require(
+            i_saleToken.balanceOf(address(this)) >= userTokens,
+            "insufficient escrow"
+        );
         s_purchased[msg.sender] = 0;
 
-        bool success = i_saleToken.transfer(msg.sender, userTokens);
-        if (!success) {
-            revert Presale__CLAIMING_FAILED();
-        }
+        // bool success = i_saleToken.transfer(msg.sender, userTokens);
+        // if (!success) {
+        //     revert Presale__CLAIMING_FAILED();
+        // }
+        i_saleToken.safeTransfer(msg.sender, userTokens);
+
+        emit TokensClaimed(msg.sender, userTokens);
     }
 
-    function withdrawFunds() external onlyOwner {}
+    function withdrawFunds()
+        external
+        onlyOwner
+        isFinalized(true)
+        checkedState(PresaleState.CLAIMABLE)
+        nonReentrant
+    {
+        uint256 fundsToWithdraw = address(this).balance;
+        if (fundsToWithdraw == 0) {
+            revert Presale__NoFundsToWithdraw();
+        }
+        (bool success, ) = payable(owner()).call{value: fundsToWithdraw}("");
+        if (!success) {
+            revert Presale__WithdrawFailed();
+        }
+    }
 
     function refund() external {}
 
