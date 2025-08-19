@@ -71,9 +71,10 @@ contract Presale is Ownable, ReentrancyGuard {
     // State Variables
     ///////////////////
     uint256 private constant PRECISION = 1e18;
-    uint256 private constant TOKEN_FEE = 250;
 
     address public immutable i_factory;
+    uint16 private immutable i_fee;
+
     address public immutable ethUsdPriceFeed;
     IERC20 public immutable i_saleToken;
     uint256 public immutable i_startTime;
@@ -154,13 +155,14 @@ contract Presale is Ownable, ReentrancyGuard {
      */
     constructor(
         address _owner,
+        uint16 _tokenFee,
         address _tokenAddress,
         string memory _tokenName,
         uint256 _tokenSupplyInUnits,
-        uint256 _maxContribution,
         uint256 _hardCapWei,
         uint256 _softCapWei,
-        uint256 _minContribution
+        uint256 _minContribution,
+        uint256 _maxContribution
     ) Ownable(_owner) {
         require(_hardCapWei > 0);
         require(_tokenSupplyInUnits > 0);
@@ -174,6 +176,7 @@ contract Presale is Ownable, ReentrancyGuard {
         i_maxContributionWei = _maxContribution;
         i_minContributionWei = _minContribution;
         i_factory = msg.sender;
+        i_fee = _tokenFee;
 
         i_startTime = block.timestamp;
         i_endTime = block.timestamp + 31 days;
@@ -218,7 +221,7 @@ contract Presale is Ownable, ReentrancyGuard {
             (msg.value * i_TOKENS_PER_ETH) / PRECISION
         );
 
-        uint256 fee = (msg.value * TOKEN_FEE) / 10000;
+        uint256 fee = (msg.value * i_fee) / 10000;
 
         (bool success, ) = i_factory.call{value: fee}("");
         if (!success) {
@@ -272,7 +275,9 @@ contract Presale is Ownable, ReentrancyGuard {
         }
     }
 
-    function refund() external {}
+    function refund() external checkedState(PresaleState.REFUNDABLE) {
+        
+    }
 
     /////////////////////////////////////
     // Internal Functions///////////////

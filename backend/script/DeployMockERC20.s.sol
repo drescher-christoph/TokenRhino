@@ -9,6 +9,18 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract DeployMockERC20 is Script {
 
     function run() external returns (ERC20Mock) {
+        vm.startBroadcast();
+        ERC20Mock token = new ERC20Mock(
+            "TokenRhino",
+            "TRH",
+            msg.sender, 
+            1_000_000 ether 
+        );
+        vm.stopBroadcast();
+        return token;
+    }
+
+    function runLocal() external returns (ERC20Mock) {
 
         ERC20Mock token = new ERC20Mock(
             "TokenRhino",
@@ -22,3 +34,7 @@ contract DeployMockERC20 is Script {
 
         
 }
+
+// USAGE:
+// DeployMockERC20 deployMockERC20 = new DeployMockERC20();
+// ERC20Mock rhinoToken = deployMockERC20.run();

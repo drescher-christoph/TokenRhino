@@ -19,19 +19,19 @@ contract DeployPresale is Script {
     function run() external returns (Presale, ERC20Mock) {
         vm.startBroadcast();
 
-        // Deploy Mock ERC20 Token
         DeployMockERC20 deployMockERC20 = new DeployMockERC20();
         ERC20Mock rhinoToken = deployMockERC20.run();
 
         Presale presale = new Presale(
-            msg.sender,               // _owner
-            address(rhinoToken),           // _tokenAddress
-            "TokenRhino",             // _tokenName (nur Info)
-            TOKENS_FOR_SALE,          // _tokenSupplyInUnits (zu verkaufende Menge)
-            MAX_CONTRIB,              // _maxContribution
-            HARD_CAP_WEI,             // _hardCapWei
-            SOFT_CAP_WEI,             // _softCapWei
-            MIN_CONTRIB               // _minContribution
+            msg.sender,               
+            250,
+            address(rhinoToken),          
+            "TokenRhino",            
+            TOKENS_FOR_SALE,         
+            HARD_CAP_WEI,            
+            SOFT_CAP_WEI,             
+            MIN_CONTRIB,              
+            MAX_CONTRIB              
         );
 
         bool ok = rhinoToken.transfer(address(presale), TOKENS_FOR_SALE);
@@ -40,6 +40,31 @@ contract DeployPresale is Script {
         console2.log("Token   :", address(rhinoToken));
         console2.log("Presale :", address(presale));
         vm.stopBroadcast();
+
+        return (presale, rhinoToken);
+    }
+
+    function runLocal() external returns (Presale, ERC20Mock) {
+        DeployMockERC20 deployMockERC20 = new DeployMockERC20();
+        ERC20Mock rhinoToken = deployMockERC20.run();
+
+        Presale presale = new Presale(
+            msg.sender,               
+            250,
+            address(rhinoToken),          
+            "TokenRhino",            
+            TOKENS_FOR_SALE,         
+            HARD_CAP_WEI,            
+            SOFT_CAP_WEI,             
+            MIN_CONTRIB,              
+            MAX_CONTRIB              
+        );
+
+        bool ok = rhinoToken.transfer(address(presale), TOKENS_FOR_SALE);
+        require(ok, "prefund failed");
+
+        console2.log("Token   :", address(rhinoToken));
+        console2.log("Presale :", address(presale));
 
         return (presale, rhinoToken);
     }

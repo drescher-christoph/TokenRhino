@@ -2,12 +2,16 @@
 pragma solidity ^0.8.19;
 
 import {Test, console} from "forge-std/Test.sol";
-import {DeployMockERC20} from "../../script/DeployMockERC20.s.sol";
 import {DeployPresale} from "../../script/DeployPresale.s.sol";
+import {DeployFactory} from "../../script/DeployFactory.s.sol";
+import {DeployMockERC20} from "../../script/DeployMockERC20.s.sol";
 import {Presale} from "../../src/Presale.sol";
+import {PresaleFactory} from "../../src/PresaleFactory.sol";
 import {ERC20Mock} from "../../test/mocks/ERC20Mock.sol";
 
 contract PresaleTest is Test {
+
+    PresaleFactory factory;
     Presale presale;
     ERC20Mock token;
 
@@ -16,7 +20,14 @@ contract PresaleTest is Test {
     uint256 private constant TOKEN_PER_ETH = 16e18;
     uint256 private constant INVESTMENT = 1 ether;
 
-    address public USER = makeAddr("user");
+    uint256 constant TOKENS_FOR_SALE = 800_000 ether;   
+    uint256 constant HARD_CAP_WEI    = 50 ether;       
+    uint256 constant SOFT_CAP_WEI    = 30 ether;        
+    uint256 constant MIN_CONTRIB     = 0.05 ether;     
+    uint256 constant MAX_CONTRIB     = 15 ether;        
+
+    address public FACTORY_OWNER = makeAddr("factory_owner");
+    address public PRESALE_OWNER = makeAddr("presale_owner");
     address public USER2 = makeAddr("user2");
     address public USER3 = makeAddr("user3");
     address public USER4 = makeAddr("user4");
@@ -29,13 +40,35 @@ contract PresaleTest is Test {
     }
 
     function setUp() public {
-        DeployPresale deployPresale = new DeployPresale();
-        (presale, token) = deployPresale.run();
+        vm.startPrank(FACTORY_OWNER);
+        DeployFactory factoryDeployer = new DeployFactory();
+        factory = factoryDeployer.runLocal();
+        vm.stopPrank();
+        
+        vm.startPrank(PRESALE_OWNER);
+        DeployMockERC20 erc20Deployer = new DeployMockERC20();
+        token = erc20Deployer.runLocal();
 
-        vm.deal(USER, 30 ether);
+        address presaleAddress = factory.createPresale(
+            address(token),
+            "TokenRhino",
+            TOKENS_FOR_SALE,
+            HARD_CAP_WEI,
+            SOFT_CAP_WEI,
+            MIN_CONTRIB,
+            MAX_CONTRIB
+        );
+        presale = Presale(presaleAddress);
+
+        token.transfer(presaleAddress, TOKENS_FOR_SALE);
+        vm.stopPrank();
+
+        vm.deal(PRESALE_OWNER, 30 ether);
         vm.deal(USER2, 30 ether);
         vm.deal(USER3, 30 ether);
         vm.deal(USER4, 30 ether);
+
+        console.log("TEST SET UP AND READY!");
     }
 
     ////////////////////////////////////
@@ -172,13 +205,13 @@ contract PresaleTest is Test {
     {
         skip(32 * 24 * 60 * 60);
         uint256 balanceBefore = address(presale).balance;
-        uint256 userBalanceBefore = address(USER).balance;
-        vm.startPrank(USER);
+        uint256 userBalanceBefore = address(PRESALE_OWNER).balance;
+        vm.startPrank(PRESALE_OWNER);
         presale.withdrawFunds();
         vm.stopPrank();
 
         uint256 balanceAfter = address(presale).balance;
-        uint256 userBalanceAfter = address(USER).balance;
+        uint256 userBalanceAfter = address(PRESALE_OWNER).balance;
         assertEq(balanceAfter, 0, "Balance after withdrawal has to be zero");
         assertEq(userBalanceAfter, userBalanceBefore + balanceBefore, "Owner balance has to be withdrawal funds amount or more");
     }
