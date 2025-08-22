@@ -54,6 +54,7 @@ contract Presale is Ownable, ReentrancyGuard {
     error Presale__CLAIMING_FAILED();
     error Presale__NoFundsToWithdraw();
     error Presale__WithdrawFailed();
+    error Presale__RefundFailed();
 
     enum PresaleState {
         ACTIVE,
@@ -221,7 +222,7 @@ contract Presale is Ownable, ReentrancyGuard {
             (msg.value * i_TOKENS_PER_ETH) / PRECISION
         );
 
-        uint256 fee = (msg.value * i_fee) / 10000;
+        uint256 fee = (msg.value * i_fee) / 10_000;
 
         (bool success, ) = i_factory.call{value: fee}("");
         if (!success) {
@@ -276,7 +277,13 @@ contract Presale is Ownable, ReentrancyGuard {
     }
 
     function refund() external checkedState(PresaleState.REFUNDABLE) {
-        
+        uint256 refundableAmount = s_contributedWei[msg.sender];
+        require(refundableAmount > 0, "The user doesn't have any refundable funds");
+        s_contributedWei[msg.sender] = 0;
+        (bool success,) = msg.sender.call{value: refundableAmount}("");
+        if (!success) {
+            revert Presale__RefundFailed();
+        }
     }
 
     /////////////////////////////////////

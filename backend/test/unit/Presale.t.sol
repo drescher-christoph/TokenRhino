@@ -19,6 +19,7 @@ contract PresaleTest is Test {
     uint256 private constant TOKEN_FEE = 250;
     uint256 private constant TOKEN_PER_ETH = 16e18;
     uint256 private constant INVESTMENT = 1 ether;
+    uint256 private constant CREATE_FEE = 0.01 ether;
 
     uint256 constant TOKENS_FOR_SALE = 800_000 ether;   
     uint256 constant HARD_CAP_WEI    = 50 ether;       
@@ -40,6 +41,12 @@ contract PresaleTest is Test {
     }
 
     function setUp() public {
+
+        vm.deal(PRESALE_OWNER, 30 ether);
+        vm.deal(USER2, 30 ether);
+        vm.deal(USER3, 30 ether);
+        vm.deal(USER4, 30 ether);
+        
         vm.startPrank(FACTORY_OWNER);
         DeployFactory factoryDeployer = new DeployFactory();
         factory = factoryDeployer.runLocal();
@@ -49,7 +56,7 @@ contract PresaleTest is Test {
         DeployMockERC20 erc20Deployer = new DeployMockERC20();
         token = erc20Deployer.runLocal();
 
-        address presaleAddress = factory.createPresale(
+        address presaleAddress = factory.createPresale{value: CREATE_FEE}(
             address(token),
             "TokenRhino",
             TOKENS_FOR_SALE,
@@ -62,11 +69,6 @@ contract PresaleTest is Test {
 
         token.transfer(presaleAddress, TOKENS_FOR_SALE);
         vm.stopPrank();
-
-        vm.deal(PRESALE_OWNER, 30 ether);
-        vm.deal(USER2, 30 ether);
-        vm.deal(USER3, 30 ether);
-        vm.deal(USER4, 30 ether);
 
         console.log("TEST SET UP AND READY!");
     }
@@ -214,6 +216,48 @@ contract PresaleTest is Test {
         uint256 userBalanceAfter = address(PRESALE_OWNER).balance;
         assertEq(balanceAfter, 0, "Balance after withdrawal has to be zero");
         assertEq(userBalanceAfter, userBalanceBefore + balanceBefore, "Owner balance has to be withdrawal funds amount or more");
+    }
+
+    function testWithdrawWhenNotSuccessful() public tokensBought(USER2, INVESTMENT) tokensBought(USER3, INVESTMENT) {
+        skip(32 * 24 * 60 * 60);
+        vm.startPrank(PRESALE_OWNER);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Presale.Presale__NotExpectedState.selector,
+                1,
+                2
+            )
+        );
+        presale.withdrawFunds();
+        vm.stopPrank();
+    }
+
+    function testWithdrawWhenNoFundsToWithdraw() tokensBought(USER2, INVESTMENT * 10) tokensBought(USER3, INVESTMENT * 10) tokensBought(USER4, INVESTMENT * 10) public {
+        skip(32 * 24 * 60 * 60);
+        vm.startPrank(PRESALE_OWNER);
+        presale.withdrawFunds();
+        vm.expectRevert(Presale.Presale__NoFundsToWithdraw.selector);
+        presale.withdrawFunds();
+        vm.stopPrank();
+    }
+
+    ////////////////////////////////////
+    // Refund Tests //////////////////
+    ////////////////////////////////////
+
+    function testRefund() public tokensBought(USER2, INVESTMENT) tokensBought(USER3, INVESTMENT) {
+        skip(32 * 24 * 60 * 60);
+        vm.startPrank(USER2);
+        presale.refund();
+        vm.stopPrank();
+    }
+
+    function testRefundWhenNoFundsAvailable() public tokensBought(USER2, INVESTMENT) tokensBought(USER3, INVESTMENT) {
+        skip(32 * 24 * 60 * 60);
+        vm.startPrank(USER4);
+        vm.expectRevert("The user doesn't have any refundable funds");
+        presale.refund();
+        vm.stopPrank();
     }
 
     ////////////////////////////////////

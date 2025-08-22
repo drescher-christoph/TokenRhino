@@ -11,15 +11,16 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract DeployFactory is Script {
 
     uint16 constant TOKEN_FEE = 250;  
+    uint256 constant CREATE_FEE = 0.01 ether; 
     uint256 constant SOFT_CAP_WEI    = 30 ether;        
-    uint256 constant MIN_CONTRIB     = 0.05 ether;     
-
+    uint256 constant MIN_CONTRIB     = 0.05 ether;    
 
     function run() external returns (PresaleFactory) {
         vm.startBroadcast();
 
         PresaleFactory factory = new PresaleFactory(
-            TOKEN_FEE
+            TOKEN_FEE,
+            CREATE_FEE 
         );
         
         vm.stopBroadcast();
@@ -29,7 +30,8 @@ contract DeployFactory is Script {
 
     function runLocal() external returns (PresaleFactory) {
         PresaleFactory factory = new PresaleFactory(
-            TOKEN_FEE
+            TOKEN_FEE,
+            CREATE_FEE
         );
         return factory;
     }

@@ -8,14 +8,19 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 
 contract PresaleFactory is Ownable, ReentrancyGuard {
 
-    error InvalidToken();
-    error InvalidSupply();
-    error InvalidHardCap();
-    error InvalidSoftCap();
-    error InvalidContributionRange();
-    error PriceResolutionTooLow();
+    error PresaleFactory__InvalidToken();
+    error PresaleFactory__InvalidSupply();
+    error PresaleFactory__InvalidHardCap();
+    error PresaleFactory__InvalidSoftCap();
+    error PresaleFactory__InvalidContributionRange();
+    error PresaleFactory__PriceResolutionTooLow();
+    error PresaleFactory__WithdrawFeesFailed();
+    error PresaleFactory__NoFeesAvailable();
          
-    uint16  public feeBps;           
+    uint16  public feeBps;       
+    uint256 public createFeeWei;    
+
+    uint256 accuredCreateFees; 
     address[] public allPresales;    
     mapping(address => address[]) public presalesByCreator;
 
@@ -24,12 +29,15 @@ contract PresaleFactory is Ownable, ReentrancyGuard {
     // uint256 public minDuration;      
 
     event PresaleCreated(address indexed creator, address presale, address token);
-    event FeeWithdrawn(address indexed to, uint256 amount);
+    event FeesWithdrawn(address indexed to, uint256 amount);
     event FeeReceived(address indexed presale, uint256 amount);
+    event CreateFeePaid(address creator, uint256 createFeeWei);
+    event CreateFeeUpdated(uint256 newFee);
     event PolicyUpdated(/* … */);
 
-    constructor(uint16 _tokenFee) Ownable(msg.sender) {
+    constructor(uint16 _tokenFee, uint256 _createFeeWei) Ownable(msg.sender) {
         feeBps = _tokenFee;
+        createFeeWei = _createFeeWei;
     }
 
     ///////////////////////
@@ -39,10 +47,6 @@ contract PresaleFactory is Ownable, ReentrancyGuard {
     receive() external payable {
         emit FeeReceived(msg.sender, msg.value);
     }
-
-    ///////////////////////
-    // Extern Functions ///
-    ///////////////////////
 
     ///////////////////////
     // Public Functions ///
@@ -56,15 +60,27 @@ contract PresaleFactory is Ownable, ReentrancyGuard {
         uint256 _softCapWei,
         uint256 _minContribution,
         uint256 _maxContribution
-    ) public returns (address presale) {
-        if (_tokenAddress == address(0)) revert InvalidToken();
-        if (_tokenSupplyInUnits == 0) revert InvalidSupply();
-        if (_hardCapWei == 0) revert InvalidHardCap();
-        if (_softCapWei == 0 || _softCapWei > _hardCapWei) revert InvalidSoftCap();
-        if (_maxContribution != 0 && _minContribution > _maxContribution) {
-            revert InvalidContributionRange();
+    ) public payable returns (address presale) {
+        // Fee
+        require(msg.value >= createFeeWei, "create fee required");
+        accuredCreateFees += createFeeWei;
+        emit CreateFeePaid(msg.sender, createFeeWei);
+
+        // refund overpay
+        uint256 overpay = msg.value - createFeeWei;
+        if (overpay > 0) {
+            (bool refOk,) = msg.sender.call{value: overpay}("");
+            require(refOk, "refund failed!");
         }
-        if ( (_tokenSupplyInUnits * 1e18) / _hardCapWei == 0 ) revert PriceResolutionTooLow();
+
+        if (_tokenAddress == address(0)) revert PresaleFactory__InvalidToken();
+        if (_tokenSupplyInUnits == 0) revert PresaleFactory__InvalidSupply();
+        if (_hardCapWei == 0) revert PresaleFactory__InvalidHardCap();
+        if (_softCapWei == 0 || _softCapWei > _hardCapWei) revert PresaleFactory__InvalidSoftCap();
+        if (_maxContribution != 0 && _minContribution > _maxContribution) {
+            revert PresaleFactory__InvalidContributionRange();
+        }
+        if ( (_tokenSupplyInUnits * 1e18) / _hardCapWei == 0 ) revert PresaleFactory__PriceResolutionTooLow();
 
         Presale newPresale = new Presale(
             msg.sender,
@@ -85,6 +101,39 @@ contract PresaleFactory is Ownable, ReentrancyGuard {
         emit PresaleCreated(msg.sender, presale, _tokenAddress);
     }
 
-    function withdrawFees() public onlyOwner {}
+    function withdrawFees(address _to) public onlyOwner {
+        if (address(this).balance == 0) revert PresaleFactory__NoFeesAvailable();
+        uint256 feesToWithdraw = address(this).balance;
+        (bool success, ) = payable(_to).call{value: address(this).balance}("");
+        if (!success) {
+            revert PresaleFactory__WithdrawFeesFailed();
+        }
+        emit FeesWithdrawn(owner(), feesToWithdraw);
+    }
+
+    function setCreateFee(uint256 _newFee) public onlyOwner {
+        createFeeWei = _newFee;
+        emit CreateFeeUpdated(_newFee);
+    }
+
+    /////////////////////////////////////
+    // External View Functions///////////
+    /////////////////////////////////////
+
+    function getFeeBps() external view returns (uint256) {
+        return feeBps;
+    }
+
+    function getCreationFee() external view returns (uint256) {
+        return createFeeWei;
+    }
+
+    function getPresalesOfUser(address _user) external view returns (address[] memory) {
+        return presalesByCreator[_user];
+    }
+
+    function getPresaleCountOfUser(address _user) external view returns (uint256) {
+        return presalesByCreator[_user].length;
+    }
     
 }
