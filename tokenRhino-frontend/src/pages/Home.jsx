@@ -1,17 +1,16 @@
 import React from "react";
 import SearchBar from "../components/Searchbar";
 import CategoryFilters from "../components/CategoryFilters";
+import TokenCard from "../components/TokenCard";
+import dummyTokens from "../../dummyToken";
 
-const Dashboard = () => {
-
-    const handleFilterChange = () => {
-        
-    }
+const Home = () => {
+  const handleFilterChange = () => {};
 
   return (
     <div className="mx-auto max-w-7xl px-4 mt-38 sm:px-6 lg:px-8">
       {/* HERO SECTION */}
-      <div className="flex flex-col justify-center items-center">
+      <div className="flex flex-col justify-center items-center mb-10">
         <div className="text-center space-y-4 mt-8">
           <h2 className="text-white font-extrabold text-5xl sm:text-6xl tracking-tight">
             Explore Live Token Presales
@@ -25,11 +24,23 @@ const Dashboard = () => {
         </div>
         <CategoryFilters onFilterChange={handleFilterChange} />
       </div>
-      <div className="bg-white">
-        <button>Hello World</button>
+      {/* Token Listings */}
+      <div className="grid grid-cols-4 gap-4">
+        {dummyTokens.map((token) => (
+          <TokenCard
+            key={token.id}
+            logo={token.logo}
+            name={token.name}
+            symbol={token.symbol}
+            price={token.price}
+            change={token.change}
+            raised={token.raised}
+            goal={token.goal}
+          />
+        ))}
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default Home;
