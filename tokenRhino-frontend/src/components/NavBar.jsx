@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 const NavBar = () => {
   return (
@@ -68,9 +69,7 @@ const NavBar = () => {
           </nav>
 
           {/* Wallet Button */}
-          <button className="bg-[#00E3A5] hover:bg-[#00C896] transition-colors duration-300 text-[#0F1117] font-semibold px-5 py-2 rounded-lg shadow-md hover:shadow-[#00E3A5]/40">
-            Connect Wallet
-          </button>
+          <ConnectButton showBalance={true} />
         </div>
       </div>
     </header>
