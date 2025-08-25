@@ -29,7 +29,7 @@ export default function CreatePresaleReview() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 pt-28 pb-16">
-      <Stepper steps={["Token & Presale Detauls", "Review", "Funding"]} current={1} />
+      <Stepper steps={["Details", "Review", "Deploy", "Funding"]} current={1} />
 
       <div className="mt-8 grid grid-cols-1 gap-6">
         <ReviewSummary token={token} cfg={cfg} validation={validation} checks={checks} setChecks={setChecks} />

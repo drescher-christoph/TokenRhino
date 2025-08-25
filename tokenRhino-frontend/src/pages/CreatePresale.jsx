@@ -42,11 +42,7 @@ const CreatePresale = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-6 pt-28 pb-16">
-      <Stepper
-        steps={steps}
-        current={current}
-        onStepClick={(i) => setCurrent(i)}
-      />
+      <Stepper steps={["Details", "Review", "Deploy", "Funding"]} current={1} />
 
       {/* Grid: links Form, rechts Preview */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -10,8 +10,15 @@ import Portfolio from "./pages/Portfolio";
 import Docs from "./pages/Docs";
 import CreatePresaleReview from "./pages/CreatePresaleReview";
 import CreateWallet from "./pages/CreateWallet";
+import FundContract from "./pages/FundContract";
+import PresaleSuccess from "./pages/PresaleSuccess";
 import "@rainbow-me/rainbowkit/styles.css";
-import { getDefaultConfig, RainbowKitProvider, darkTheme, midnightTheme } from "@rainbow-me/rainbowkit";
+import {
+  getDefaultConfig,
+  RainbowKitProvider,
+  darkTheme,
+  midnightTheme,
+} from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
 import {
   mainnet,
@@ -52,6 +59,9 @@ function App() {
                   path="/create-presale/wallet"
                   element={<CreateWallet />}
                 />
+                <Route path="/create-presale/fund" element={<FundContract />} />
+                <Route path="/create-presale/success" element={<PresaleSuccess />} />
+
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/docs" element={<Docs />} />
               </Routes>
