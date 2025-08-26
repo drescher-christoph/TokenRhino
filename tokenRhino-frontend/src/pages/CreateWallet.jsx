@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   useAccount,
   useBalance,
@@ -7,9 +7,10 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
-import { parseEther } from "viem";
+import { parseEther, decodeEventLog } from "viem";
 import { useNavigate } from "react-router-dom";
 import { PresaleFactoryAbi } from "../abi/PresaleFactory";
+import { presaleCreatedEventAbi } from "../abi/presaleCreatedAbi";
 import Stepper from "../components/Stepper";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import DeployingAnimation from "../components/DeployingAnimation";
@@ -157,37 +158,49 @@ export default function CreateWallet() {
     }
   };
 
-  // Nach Erfolg: Presale-Adresse aus Event extrahieren (wenn Factory returned address, brauchst du das nicht)
-  if (isSuccess && receipt) {
-    try {
-      // Versuch 1: Rückgabewert (falls dein ABI "returns (address)" liefert, wagmi gibt das NICHT direkt hier)
-      // Daher: Versuch 2: Event dekodieren
-      const logs = receipt.logs || [];
-      const iface = new InterfaceLike(PresaleFactoryAbi); // wir bauen eine Mini-Deko unten
-      const ev = findPresaleCreated(logs, iface);
-      const presaleAddr = ev?.args?.presale;
-      if (presaleAddr) {
-        navigate(`/create-presale/fund?addr=${presaleAddr}`);
-      } else {
-        navigate(`/create-presale/fund?tx=${txHash}`); // Fallback, falls Event nicht geparst wird
+  useEffect(() => {
+    if (isSuccess && receipt) {
+      try {
+        const ev = findPresaleCreated(receipt.logs);
+        const presaleAddr = ev?.args?.presale;
+        if (presaleAddr) {
+          const presaleData = {
+            token,
+            cfg,
+            presaleAddr,
+          };
+          localStorage.setItem(
+            "createDraftPresale",
+            JSON.stringify(presaleData)
+          );
+          navigate(`/create-presale/fund?addr=${presaleAddr}`);
+        } else {
+          navigate(`/create-presale/fund?tx=${txHash}`);
+        }
+      } catch {
+        navigate(`/create-presale/fund?tx=${txHash}`);
       }
-    } catch {
-      navigate(`/create-presale/fund?tx=${txHash}`);
     }
-  }
+  }, [isSuccess, receipt, navigate, token, cfg, txHash]);
 
   // Mini „InterfaceLike“ fürs Event-Decoding ohne extra Lib (quick & dirty über viem)
   function InterfaceLike(abi) {
     return { abi };
   }
-  function findPresaleCreated(logs, iface) {
-    // viem kann Events decoden, aber um es simpel zu halten:
-    // Suche den Log mit dem richtigen Topic (Event-Signatur)
-    const sig = "PresaleCreated(address,address,address)";
-    // viem utils: keccak256 of signature → topic0 (hier sparen wir's uns; in echt: use decodeEventLog from viem)
-    // Für MVP: lass den Fallback mit ?tx=hash greifen, oder ersetze diese Funktion
-    return null;
+
+  function findPresaleCreated(logs) {
+  for (const log of logs) {
+    try {
+      const decoded = decodeEventLog({
+        abi: [presaleCreatedEventAbi],
+        data: log.data,
+        topics: log.topics,
+      });
+      if (decoded) return decoded;
+    } catch {}
   }
+  return null;
+}
 
   // UI
   const wrongChain = isConnected && chainId !== REQUIRED_CHAIN_ID;
@@ -199,43 +212,43 @@ export default function CreateWallet() {
         <h1 className="text-white text-2xl font-bold mb-4">Connect & Deploy</h1>
 
         {waiting ? (
-            <>
+          <>
             <DeployingAnimation />
-            </>
+          </>
         ) : (
-            <div className="space-y-3 text-sm">
-          <Row label="Wallet">
-            {isConnected ? (
-              <span className="text-[#00E3A5]">
-                Connected: {address?.slice(0, 6)}…{address?.slice(-4)}
+          <div className="space-y-3 text-sm">
+            <Row label="Wallet">
+              {isConnected ? (
+                <span className="text-[#00E3A5]">
+                  Connected: {address?.slice(0, 6)}…{address?.slice(-4)}
+                </span>
+              ) : (
+                <span className="text-red-400">Not connected</span>
+              )}
+            </Row>
+            <Row label="Network">
+              {wrongChain ? (
+                <button
+                  className="px-3 py-1.5 rounded-md bg-[#23272F] border border-[#2F333D] text-white hover:border-[#00E3A5]"
+                  onClick={() => switchChain?.({ chainId: REQUIRED_CHAIN_ID })}
+                >
+                  Switch to {REQUIRED_CHAIN_ID}
+                </button>
+              ) : (
+                <span className="text-gray-300">{chainId ?? "—"}</span>
+              )}
+            </Row>
+            <Row label="Balance">
+              <span className="text-gray-300">
+                {balance
+                  ? `${balance.formatted.slice(0, 6)} ${balance.symbol}`
+                  : "—"}
               </span>
-            ) : (
-              <span className="text-red-400">Not connected</span>
-            )}
-          </Row>
-          <Row label="Network">
-            {wrongChain ? (
-              <button
-                className="px-3 py-1.5 rounded-md bg-[#23272F] border border-[#2F333D] text-white hover:border-[#00E3A5]"
-                onClick={() => switchChain?.({ chainId: REQUIRED_CHAIN_ID })}
-              >
-                Switch to {REQUIRED_CHAIN_ID}
-              </button>
-            ) : (
-              <span className="text-gray-300">{chainId ?? "—"}</span>
-            )}
-          </Row>
-          <Row label="Balance">
-            <span className="text-gray-300">
-              {balance
-                ? `${balance.formatted.slice(0, 6)} ${balance.symbol}`
-                : "—"}
-            </span>
-          </Row>
-          <Row label="Create Fee">
-            <span className="text-gray-300">{CREATE_FEE_ETH} ETH + Gas</span>
-          </Row>
-        </div>
+            </Row>
+            <Row label="Create Fee">
+              <span className="text-gray-300">{CREATE_FEE_ETH} ETH + Gas</span>
+            </Row>
+          </div>
         )}
 
         {uiError && (
