@@ -14,7 +14,8 @@ import {
   FeesWithdrawn,
   OwnershipTransferred,
   PolicyUpdated,
-  PresaleCreated
+  PresaleCreated,
+  Presale
 } from "../generated/schema"
 
 export function handleCreateFeePaid(event: CreateFeePaidEvent): void {
@@ -111,6 +112,13 @@ export function handlePresaleCreated(event: PresaleCreatedEvent): void {
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
-
   entity.save()
+
+  let presale = new Presale(event.params.presale)
+  presale.creator = event.params.creator
+  presale.token = event.params.token
+  presale.presale = event.params.presale
+  presale.createdAt = event.block.timestamp
+  presale.factoryEvent = entity.id
+  presale.save()
 }

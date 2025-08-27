@@ -59,3 +59,12 @@ type PresaleCreated @entity(immutable: true) {
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+
+type Presale @entity(immutable: true) {
+  id: Bytes! # presale contract address
+  creator: Bytes!
+  presale: Bytes!
+  token: Bytes!
+  createdAt: BigInt!
+  factoryEvent: PresaleCreated! # 1:1 Beziehung
+}
