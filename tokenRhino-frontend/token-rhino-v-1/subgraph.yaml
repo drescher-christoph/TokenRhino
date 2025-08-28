@@ -28,6 +28,8 @@ dataSources:
       abis:
         - name: PresaleFactory
           file: ./abis/PresaleFactory.json
+        - name: Presale
+          file: ./abis/Presale.json
         - name: ERC20
           file: ./abis/ERC20.json
       eventHandlers:
@@ -46,3 +48,25 @@ dataSources:
         - event: PresaleCreated(indexed address,address,address)
           handler: handlePresaleCreated
       file: ./src/presale-factory.ts
+
+templates:
+  - name: PresaleTemplate
+    kind: ethereum/contract
+    network: sepolia
+    source:
+      abi: Presale
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9  # Auf 0.0.9 aktualisieren
+      language: wasm/assemblyscript
+      entities:
+        - Presale
+      abis:
+        - name: Presale
+          file: ./abis/Presale.json
+      eventHandlers:
+        - event: TokensBought(indexed address,uint256)
+          handler: handleTokensBought
+        - event: TokensClaimed(indexed address,uint256)
+          handler: handleTokensClaimed
+      file: ./src/presale-template.ts

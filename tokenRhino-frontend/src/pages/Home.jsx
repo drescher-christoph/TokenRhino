@@ -58,8 +58,8 @@ const Home = () => {
               symbol={presale.tokenInfo?.symbol || 'N/A'}
               price={'0.05 ETH'} // TODO: echte Werte
               change={'+12'}
-              raised={'150 ETH'}
-              goal={'200 ETH'}
+              raised={presale.raised ? `${(Number(presale.raised) / 1e18).toFixed(2)} ETH` : '0 ETH'}
+              goal={presale.hardCap ? `${(Number(presale.hardCap) / 1e18).toFixed(2)} ETH` : 'N/A'}
             />
           ))}
       </div>

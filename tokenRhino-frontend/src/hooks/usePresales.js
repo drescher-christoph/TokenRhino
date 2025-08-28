@@ -1,34 +1,43 @@
-import { useQuery } from '@tanstack/react-query'
-import { gql, request } from 'graphql-request'
+import { useQuery } from "@tanstack/react-query";
+import { gql, request } from "graphql-request";
 
-const url = 'https://api.studio.thegraph.com/query/119639/token-rhino-v-1/version/latest'
-const token = '0f97fc83b69126dfea153b765e88f5f6'
+const url =
+  "https://api.studio.thegraph.com/query/119639/token-rhino-v-1/version/latest";
+const token = "0f97fc83b69126dfea153b765e88f5f6";
 
 // --- Dein GraphQL Query ---
 const PRESALES_QUERY = gql`
   {
-  presales(first: 5) {
-    id
-    creator
-    token
-    createdAt
-    tokenInfo {
-      name
-      symbol
-      decimals
-    }
-    factoryEvent {
-      blockNumber
-      blockTimestamp
+    presales(first: 5) {
+      id
+      creator
+      token
+      raised
+      softCap
+      hardCap
+      startTime
+      endTime
+      minContribution
+      maxContribution
+      createdAt
+      createdAtBlock
+      tokenInfo {
+        name
+        symbol
+        decimals
+      }
+      factoryEvent {
+        blockNumber
+        blockTimestamp
+      }
     }
   }
-}
-`
+`;
 
 // --- React Query Hook ---
 export function usePresales() {
   return useQuery({
-    queryKey: ['presales'],
+    queryKey: ["presales"],
     queryFn: async () => {
       const res = await request(
         url,
@@ -36,11 +45,11 @@ export function usePresales() {
         {},
         {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         }
-      )
-      return res.presales
+      );
+      return res.presales;
     },
     staleTime: 60 * 100,
-  })
+  });
 }

@@ -19,6 +19,7 @@ import {
   Token
 } from "../generated/schema"
 import { ERC20 } from "../generated/PresaleFactory/ERC20"
+import { Presale as PresaleTemplate } from "../generated/PresaleFactory/Presale"
 import { Bytes, Address } from "@graphprotocol/graph-ts"
 
 export function handleCreateFeePaid(event: CreateFeePaidEvent): void {
@@ -166,6 +167,39 @@ export function handlePresaleCreated(event: PresaleCreatedEvent): void {
 
   if (token !== null) {
     presale.tokenInfo = token.id
+  }
+
+  // Starten Sie das Presale-Template, um Ereignisse von diesem Presale zu überwachen
+  let presaleContract = PresaleTemplate.bind(event.params.presale)
+
+  let startResult = presaleContract.try_i_startTime()
+  if (!startResult.reverted) {
+    presale.startTime = startResult.value
+  }
+
+  let endResult = presaleContract.try_i_endTime()
+  if (!endResult.reverted) {
+    presale.endTime = endResult.value
+  }
+
+  let hardcapResult = presaleContract.try_i_hardCapWei()
+  if (!hardcapResult.reverted) {
+    presale.hardCap = hardcapResult.value
+  }
+
+  let softcapResult = presaleContract.try_i_softCapWei()
+  if (!softcapResult.reverted) {
+    presale.softCap = softcapResult.value
+  }
+
+  let minContrib = presaleContract.try_i_minContributionWei()
+  if (!minContrib.reverted) {
+    presale.minContribution = minContrib.value
+  }
+
+  let maxContrib = presaleContract.try_i_maxContributionWei()
+  if (!maxContrib.reverted) {
+    presale.maxContribution = maxContrib.value
   }
 
   presale.save()

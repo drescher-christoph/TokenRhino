@@ -36,7 +36,7 @@ const TokenCard = ({ logo, name, symbol, price, change, raised, goal }) => {
       {/* Presale Progress */}
       <div className="mt-4">
         <div className="flex justify-between mb-1">
-          <span className="text-gray-400 text-xs">Raised</span>
+          <span className="text-gray-400 text-xs">Raised </span>
           <span className="text-gray-400 text-xs">
             {raised} / {goal} ETH
           </span>
