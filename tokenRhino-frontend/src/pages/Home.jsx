@@ -54,8 +54,8 @@ const Home = () => {
             <TokenCard
               key={presale.id}
               logo={`https://avatars.dicebear.com/api/identicon/${presale.presale}.svg`}
-              name={presale.presale}
-              symbol={presale.presale.slice(2, 6).toUpperCase()}
+              name={presale.tokenInfo?.name || 'Unknown Token'}
+              symbol={presale.tokenInfo?.symbol || 'N/A'}
               price={'0.05 ETH'} // TODO: echte Werte
               change={'+12'}
               raised={'150 ETH'}

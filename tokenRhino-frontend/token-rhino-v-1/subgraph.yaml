@@ -23,9 +23,13 @@ dataSources:
         - OwnershipTransferred
         - PolicyUpdated
         - PresaleCreated
+        - Presale
+        - Token
       abis:
         - name: PresaleFactory
           file: ./abis/PresaleFactory.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: CreateFeePaid(address,uint256)
           handler: handleCreateFeePaid

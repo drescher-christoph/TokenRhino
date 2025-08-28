@@ -15,8 +15,11 @@ import {
   OwnershipTransferred,
   PolicyUpdated,
   PresaleCreated,
-  Presale
+  Presale,
+  Token
 } from "../generated/schema"
+import { ERC20 } from "../generated/PresaleFactory/ERC20"
+import { Bytes, Address } from "@graphprotocol/graph-ts"
 
 export function handleCreateFeePaid(event: CreateFeePaidEvent): void {
   let entity = new CreateFeePaid(
@@ -101,6 +104,43 @@ export function handlePolicyUpdated(event: PolicyUpdatedEvent): void {
   entity.save()
 }
 
+function getOrCreateToken(tokenAddress: Bytes): Token {
+  let token = Token.load(tokenAddress)
+  if (token == null) {
+    token = new Token(tokenAddress)
+
+    let tokenAddressAsAddress = Address.fromBytes(tokenAddress)
+    
+    // ERC20 Contract binden und Token-Infos abrufen
+    let erc20 = ERC20.bind(tokenAddressAsAddress)
+    
+    // Try-Catch für fehlende ERC20 Metadata Funktionen
+    let nameResult = erc20.try_name()
+    if (!nameResult.reverted) {
+      token.name = nameResult.value
+    } else {
+      token.name = "Unknown"
+    }
+    
+    let symbolResult = erc20.try_symbol()
+    if (!symbolResult.reverted) {
+      token.symbol = symbolResult.value
+    } else {
+      token.symbol = "UNKN"
+    }
+    
+    let decimalsResult = erc20.try_decimals()
+    if (!decimalsResult.reverted) {
+      token.decimals = decimalsResult.value
+    } else {
+      token.decimals = 18
+    }
+    
+    token.save()
+  }
+  return token
+}
+
 export function handlePresaleCreated(event: PresaleCreatedEvent): void {
   let entity = new PresaleCreated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -114,11 +154,19 @@ export function handlePresaleCreated(event: PresaleCreatedEvent): void {
   entity.transactionHash = event.transaction.hash
   entity.save()
 
+  // Token-Infos abrufen und speichern
+  let token = getOrCreateToken(event.params.token)
+
   let presale = new Presale(event.params.presale)
   presale.creator = event.params.creator
   presale.token = event.params.token
   presale.presale = event.params.presale
   presale.createdAt = event.block.timestamp
   presale.factoryEvent = entity.id
+
+  if (token !== null) {
+    presale.tokenInfo = token.id
+  }
+
   presale.save()
 }

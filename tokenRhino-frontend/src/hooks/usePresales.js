@@ -7,14 +7,22 @@ const token = '0f97fc83b69126dfea153b765e88f5f6'
 // --- Dein GraphQL Query ---
 const PRESALES_QUERY = gql`
   {
-    presaleCreateds(first: 5) {
-      id
-      creator
-      presale
-      token
+  presales(first: 5) {
+    id
+    creator
+    token
+    createdAt
+    tokenInfo {
+      name
+      symbol
+      decimals
+    }
+    factoryEvent {
       blockNumber
+      blockTimestamp
     }
   }
+}
 `
 
 // --- React Query Hook ---
@@ -31,7 +39,7 @@ export function usePresales() {
           'Content-Type': 'application/json',
         }
       )
-      return res.presaleCreateds  
+      return res.presales
     },
     staleTime: 60 * 100,
   })
