@@ -1,7 +1,10 @@
 // components/create/LivePreview.jsx
 import Card from "./Card";
+import { getIPFSUrl } from "../services/ipfsService";
 
-function pct(n) { return isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 0; }
+function pct(n) {
+  return isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 0;
+}
 
 export default function LivePreview({ token, cfg }) {
   const hard = parseFloat(cfg.hardCap || 0);
@@ -21,9 +24,21 @@ export default function LivePreview({ token, cfg }) {
     <Card title="Live Preview" className="sticky top-28">
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 rounded-full bg-[#1A1F29] border border-[#23272F]" />
+        {token.logoUrl && (
+          <img
+            src={getIPFSUrl(token.logoUrl)}
+            alt="Token Logo"
+            className="w-16 h-16 rounded-full"
+          />
+        )}
         <div>
-          <div className="text-white font-semibold">{token.name || "Token Name"} <span className="text-gray-400">· {token.symbol || "SYMB"}</span></div>
-          <div className="text-xs text-gray-400">Address: {token.tokenAddress || "0x..."}</div>
+          <div className="text-white font-semibold">
+            {token.name || "Token Name"}{" "}
+            <span className="text-gray-400">· {token.symbol || "SYMB"}</span>
+          </div>
+          <div className="text-xs text-gray-400">
+            Address: {token.tokenAddress || "0x..."}
+          </div>
         </div>
       </div>
 
@@ -38,25 +53,38 @@ export default function LivePreview({ token, cfg }) {
         </div>
         <div className="bg-[#0F1117] border border-[#23272F] rounded-lg p-3">
           <div className="text-gray-400">Min / Max</div>
-          <div className="text-white font-semibold">{minC || 0} — {maxC || 0} ETH</div>
+          <div className="text-white font-semibold">
+            {minC || 0} — {maxC || 0} ETH
+          </div>
         </div>
         <div className="bg-[#0F1117] border border-[#23272F] rounded-lg p-3">
           <div className="text-gray-400">Tokens/ETH (approx.)</div>
-          <div className="text-white font-semibold">{tokensPerEth ? tokensPerEth.toLocaleString() : "-"}</div>
+          <div className="text-white font-semibold">
+            {tokensPerEth ? tokensPerEth.toLocaleString() : "-"}
+          </div>
         </div>
       </div>
 
       <div className="mt-4">
         <div className="flex justify-between text-xs text-gray-400 mb-1">
-          <span>Soft Cap Target</span><span>{progressSoft}%</span>
+          <span>Soft Cap Target</span>
+          <span>{progressSoft}%</span>
         </div>
         <div className="w-full bg-[#1A1D24] rounded-full h-2">
-          <div className="bg-[#00E3A5] h-2 rounded-full" style={{ width: `${progressSoft}%` }} />
+          <div
+            className="bg-[#00E3A5] h-2 rounded-full"
+            style={{ width: `${progressSoft}%` }}
+          />
         </div>
       </div>
 
       <div className="mt-4 text-xs text-gray-400">
-        Platform fees: <span className="text-white font-medium">{(feeBps/100).toFixed(2)}%</span> per investment · Create fee: <span className="text-white font-medium">{createFee} ETH</span>
+        Platform fees:{" "}
+        <span className="text-white font-medium">
+          {(feeBps / 100).toFixed(2)}%
+        </span>{" "}
+        per investment · Create fee:{" "}
+        <span className="text-white font-medium">{createFee} ETH</span>
       </div>
     </Card>
   );

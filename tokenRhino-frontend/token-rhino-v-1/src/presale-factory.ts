@@ -172,6 +172,17 @@ export function handlePresaleCreated(event: PresaleCreatedEvent): void {
   // Starten Sie das Presale-Template, um Ereignisse von diesem Presale zu überwachen
   let presaleContract = PresaleTemplate.bind(event.params.presale)
 
+  let tokensForSaleResult = presaleContract.try_i_tokensForSaleUnits()
+  if (!tokensForSaleResult.reverted) {
+    presale.tokensForSaleUnits = tokensForSaleResult.value
+  }
+
+  let tokensPerEthResult = presaleContract.try_i_TOKENS_PER_ETH()
+  if (!tokensPerEthResult.reverted) {
+    presale.tokensPerEth = tokensPerEthResult.value
+  }
+
+
   let startResult = presaleContract.try_i_startTime()
   if (!startResult.reverted) {
     presale.startTime = startResult.value

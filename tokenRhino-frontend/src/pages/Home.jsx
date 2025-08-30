@@ -1,5 +1,6 @@
 import React from "react";
 import SearchBar from "../components/Searchbar";
+import logo from "../assets/logo.png";
 import CategoryFilters from "../components/CategoryFilters";
 import TokenCard from "../components/TokenCard";
 import dummyTokens from "../../dummyToken";
@@ -16,6 +17,7 @@ const Home = () => {
       {/* HERO SECTION */}
       <div className="flex flex-col justify-center items-center mb-10">
         <div className="text-center space-y-4 mt-8">
+          {/* <img className="w-48 h-48 mx-auto" src={logo} alt="Logo" /> */}
           <h2 className="text-white font-extrabold text-5xl sm:text-6xl tracking-tight">
             Explore Live Token Presales
           </h2>
@@ -56,7 +58,7 @@ const Home = () => {
               logo={`https://avatars.dicebear.com/api/identicon/${presale.presale}.svg`}
               name={presale.tokenInfo?.name || 'Unknown Token'}
               symbol={presale.tokenInfo?.symbol || 'N/A'}
-              price={'0.05 ETH'} // TODO: echte Werte
+              price={Number(presale.tokensPerEth)} 
               change={'+12'}
               raised={presale.raised ? `${(Number(presale.raised) / 1e18).toFixed(2)} ETH` : '0 ETH'}
               goal={presale.hardCap ? `${(Number(presale.hardCap) / 1e18).toFixed(2)} ETH` : 'N/A'}

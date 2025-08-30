@@ -14,6 +14,8 @@ import { presaleCreatedEventAbi } from "../abi/presaleCreatedAbi";
 import Stepper from "../components/Stepper";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import DeployingAnimation from "../components/DeployingAnimation";
+import { create } from "@storacha/client";
+import { Web3Storage } from "web3.storage";
 
 // === CONFIG ===
 const FACTORY_ADDRESS = "0x8DBF8B55F53667726C0764f50179409Fd9245e5C";
@@ -23,6 +25,19 @@ const CREATE_FEE_ETH = "0.01";
 // localStorage keys (wie zuvor)
 const LS_TOKEN = "createDraftToken";
 const LS_CFG = "createDraftCfg";
+
+// Web3.storage Client (IPFS Uploads)
+const client = await create()
+
+function makeStorageClient() {
+  return new Web3Storage({ token: process.env.REACT_APP_WEB3STORAGE_TOKEN });
+}
+
+async function uploadLogo(file) {
+  const client = makeStorageClient();
+  const cid = await client.put([file], { wrapWithDirectory: false });
+  return `ipfs://${cid}`;
+}
 
 // Hilfsfunktionen
 function readDraft(key, fallback = {}) {

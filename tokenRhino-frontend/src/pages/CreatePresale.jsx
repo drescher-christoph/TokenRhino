@@ -17,7 +17,14 @@ const CreatePresale = () => {
     symbol: "",
     tokensForSale: "",
     tokenAddress: "",
-    logoFile: null, // bleibt lokal; für Upload später separat behandeln
+    logoFile: null,
+    logoUrl: "",
+    logoIpfsHash: "", 
+    website: "",
+    description: "",
+    twitter: "",
+    telegram: "",
+    discord: "",
   });
 
   const [cfg, setCfg] = useLocalStorage(LS_CFG, {

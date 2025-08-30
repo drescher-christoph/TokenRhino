@@ -7,10 +7,15 @@ const TokenCard = ({ logo, name, symbol, price, change, raised, goal }) => {
   // Prozentualer Fortschritt der Presale-Raise
   const progress = Math.min((raised / goal) * 100, 100);
 
+  function formatCompactNumber(num) {
+    if (num >= 1e9) return (num / 1e9).toFixed(2) + "B";
+    if (num >= 1e6) return (num / 1e6).toFixed(2) + "M";
+    if (num >= 1e3) return (num / 1e3).toFixed(2) + "k";
+    return num.toFixed(2);
+  }
+
   return (
-    <div
-      className="bg-[#161B22] border border-[#23272F] rounded-2xl p-5 shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 ease-in-out w-full max-w-sm"
-    >
+    <div className="bg-[#161B22] border border-[#23272F] rounded-2xl p-5 shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 ease-in-out w-full max-w-sm">
       {/* Token Logo + Name */}
       <div className="flex items-center gap-3">
         <img
@@ -26,7 +31,9 @@ const TokenCard = ({ logo, name, symbol, price, change, raised, goal }) => {
 
       {/* Preis + Change */}
       <div className="mt-4 flex items-center justify-between">
-        <p className="text-white font-semibold text-xl">${price}</p>
+        <p className="text-white font-semibold text-xl">
+          {typeof price === "number" ? formatCompactNumber(price) : price} / ETH
+        </p>
         <p className={`font-semibold ${changeColor}`}>
           {change > 0 ? "+" : ""}
           {change}%

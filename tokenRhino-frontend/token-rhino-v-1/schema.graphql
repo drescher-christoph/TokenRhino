@@ -78,6 +78,8 @@ type Presale @entity(immutable: true) {
   factoryEvent: PresaleCreated! # 1:1 Beziehung
 
   # From the Presale contract:
+  tokensForSaleUnits: BigInt
+  tokensPerEth: BigInt
   softCap: BigInt
   hardCap: BigInt
   startTime: BigInt

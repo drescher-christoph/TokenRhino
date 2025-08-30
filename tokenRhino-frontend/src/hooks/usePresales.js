@@ -12,6 +12,8 @@ const PRESALES_QUERY = gql`
       id
       creator
       token
+      tokensForSaleUnits
+      tokensPerEth
       raised
       softCap
       hardCap
