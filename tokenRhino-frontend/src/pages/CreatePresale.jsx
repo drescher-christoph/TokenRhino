@@ -20,6 +20,8 @@ const CreatePresale = () => {
     logoFile: null,
     logoUrl: "",
     logoIpfsHash: "", 
+    logoGatewayUrl: "", 
+    uploadError: "",    
     website: "",
     description: "",
     twitter: "",

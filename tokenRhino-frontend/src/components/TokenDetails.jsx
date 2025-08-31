@@ -1,5 +1,5 @@
 // components/create/TokenDetails.jsx
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import Card from "./Card";
 import { Field } from "./Field";
 import { useImageUpload } from "../hooks/useImageUploads";
@@ -15,35 +15,57 @@ export default function TokenDetails({ data, onChange }) {
 
   const set = (k, v) => onChange({ ...data, [k]: v });
 
-  // handleFileUpload MUSS innerhalb der Komponente definiert werden
   const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    try {
-      set("logoFile", file);
-      
-      // Temporäre lokale URL für Preview
-      const tempUrl = URL.createObjectURL(file);
-      set("logoUrl", tempUrl);
-      
-      // Upload zu IPFS
-      const result = await uploadImage(file, {
-        name: `${data.name || 'token'}-logo`
-      });
-      
-      // IPFS URL speichern
-      set("logoUrl", result.ipfsUrl);
-      set("logoIpfsHash", result.ipfsHash);
-      
-      // Temporäre URL freigeben
-      URL.revokeObjectURL(tempUrl);
-    } catch (err) {
-      console.error('Upload fehler:', err);
-      // Fallback zur lokalen URL
-      set("logoUrl", URL.createObjectURL(file));
-    }
-  };
+  try {
+    // ✅ Reset aller relevanten Felder
+    onChange({
+      ...data,
+      logoFile: file,
+      uploadError: null,
+      logoIpfsHash: "",
+      logoGatewayUrl: "",
+    });
+    
+    const tempUrl = URL.createObjectURL(file);
+    
+    // ✅ Temporäre URL setzen
+    onChange({
+      ...data,
+      logoFile: file,
+      logoUrl: tempUrl,
+      uploadError: null,
+    });
+    
+    const result = await uploadImage(file, {
+      name: `${data.name || 'token'}-logo`
+    });
+    
+    console.log("🌐 IPFS Upload erfolgreich:", result);
+    
+    // ✅ ALLE Felder auf einmal setzen
+    onChange({
+      ...data,
+      logoIpfsHash: result.ipfsHash,
+      logoGatewayUrl: result.gatewayUrl,
+      logoUrl: result.gatewayUrl,
+      uploadError: null,
+    });
+    
+    URL.revokeObjectURL(tempUrl);
+    
+  } catch (err) {
+    console.error('❌ Upload fehlgeschlagen:', err);
+    
+    // ✅ Nur den Fehler setzen, andere Werte beibehalten
+    onChange({
+      ...data,
+      uploadError: err.message || "Upload fehlgeschlagen",
+    });
+  }
+};
 
   return (
     <Card title="Token Details">
@@ -91,13 +113,13 @@ export default function TokenDetails({ data, onChange }) {
           <Field label="Logo" hint="PNG/SVG, quadratisch empfohlen (max. 10MB)">
             <div
               className={`flex items-center gap-3 bg-[#151821] border border-dashed border-[#2F333D] rounded-lg px-3 py-3 cursor-pointer ${
-                uploading ? 'opacity-50' : ''
+                uploading ? "opacity-50" : ""
               }`}
               onClick={() => !uploading && fileRef.current?.click()}
             >
               {data.logoUrl ? (
                 <img
-                  src={getIPFSUrl(data.logoUrl)}
+                  src={data.logoUrl}
                   alt="Logo"
                   className="w-10 h-10 rounded-full border border-[#23272F] object-cover"
                 />
@@ -105,10 +127,9 @@ export default function TokenDetails({ data, onChange }) {
                 <div className="w-10 h-10 rounded-full bg-[#1A1F29] border border-[#23272F]" />
               )}
               <div className="text-sm text-gray-400">
-                {uploading 
-                  ? "Uploading zu IPFS..." 
-                  : data.logoFile?.name || "Klicke zum Hochladen"
-                }
+                {uploading
+                  ? "Uploading zu IPFS..."
+                  : data.logoFile?.name || "Klicke zum Hochladen"}
               </div>
               <input
                 ref={fileRef}
@@ -119,8 +140,8 @@ export default function TokenDetails({ data, onChange }) {
                 onChange={handleFileUpload}
               />
             </div>
-            {error && (
-              <p className="text-red-400 text-sm mt-1">{error}</p>
+            {data.uploadError && (
+              <p className="text-red-400 text-sm mt-1">{data.uploadError}</p>
             )}
             {data.logoIpfsHash && (
               <p className="text-green-400 text-sm mt-1">

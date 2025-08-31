@@ -26,18 +26,6 @@ const CREATE_FEE_ETH = "0.01";
 const LS_TOKEN = "createDraftToken";
 const LS_CFG = "createDraftCfg";
 
-// Web3.storage Client (IPFS Uploads)
-const client = await create()
-
-function makeStorageClient() {
-  return new Web3Storage({ token: process.env.REACT_APP_WEB3STORAGE_TOKEN });
-}
-
-async function uploadLogo(file) {
-  const client = makeStorageClient();
-  const cid = await client.put([file], { wrapWithDirectory: false });
-  return `ipfs://${cid}`;
-}
 
 // Hilfsfunktionen
 function readDraft(key, fallback = {}) {

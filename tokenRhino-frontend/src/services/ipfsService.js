@@ -51,9 +51,23 @@ export async function uploadToPinata(file, options = {}) {
   };
 }
 
-export function getIPFSUrl(ipfsUrl) {
-  if (ipfsUrl.startsWith("ipfs://")) {
-    return `https://gateway.pinata.cloud/ipfs/${ipfsUrl.substring(7)}`;
+export function getIPFSUrl(ipfsHashOrUrl) {
+  if (!ipfsHashOrUrl) return "";
+  
+  // Falls es ein Hash ohne Prefix ist (z.B. "Qm...")
+  if (ipfsHashOrUrl.startsWith('Qm') && ipfsHashOrUrl.length === 46) {
+    return `https://gateway.pinata.cloud/ipfs/${ipfsHashOrUrl}`;
   }
-  return ipfsUrl;
+  
+  // Falls es eine ipfs:// URL ist
+  if (ipfsHashOrUrl.startsWith("ipfs://")) {
+    return `https://gateway.pinata.cloud/ipfs/${ipfsHashOrUrl.substring(7)}`;
+  }
+  
+  // Falls es bereits eine HTTP URL ist
+  if (ipfsHashOrUrl.startsWith("http")) {
+    return ipfsHashOrUrl;
+  }
+  
+  return ipfsHashOrUrl;
 }

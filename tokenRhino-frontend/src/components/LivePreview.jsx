@@ -7,6 +7,9 @@ function pct(n) {
 }
 
 export default function LivePreview({ token, cfg }) {
+
+  console.log("🎨 LivePreview rerender:", token.logoUrl);
+  
   const hard = parseFloat(cfg.hardCap || 0);
   const soft = parseFloat(cfg.softCap || 0);
   const minC = parseFloat(cfg.minContrib || 0);
@@ -23,14 +26,16 @@ export default function LivePreview({ token, cfg }) {
   return (
     <Card title="Live Preview" className="sticky top-28">
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-[#1A1F29] border border-[#23272F]" />
-        {token.logoUrl && (
-          <img
-            src={getIPFSUrl(token.logoUrl)}
-            alt="Token Logo"
-            className="w-16 h-16 rounded-full"
-          />
-        )}
+        <div className="relative w-12 h-12">
+          {/* <div className="w-12 h-12 rounded-full bg-[#1A1F29] border border-[#23272F]" /> */}
+          {token.logoUrl && (
+            <img
+              src={token.logoUrl}
+              alt="Token Logo"
+              className="absolute inset-0 w-12 h-12 rounded-full object-cover"
+            />
+          )}
+        </div>
         <div>
           <div className="text-white font-semibold">
             {token.name || "Token Name"}{" "}
