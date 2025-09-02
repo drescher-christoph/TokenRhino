@@ -14,6 +14,7 @@ contract DeployPresale is Script {
     uint256 constant SOFT_CAP_WEI    = 30 ether;        // z.B. 20 ETH
     uint256 constant MIN_CONTRIB     = 0.05 ether;      // 0.05 ETH
     uint256 constant MAX_CONTRIB     = 15 ether;         // 5 ETH (0 = kein Limit)
+    string constant METADATA_CID     = "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG";  
 
 
     function run() external returns (Presale, ERC20Mock) {
@@ -31,7 +32,8 @@ contract DeployPresale is Script {
             HARD_CAP_WEI,            
             SOFT_CAP_WEI,             
             MIN_CONTRIB,              
-            MAX_CONTRIB              
+            MAX_CONTRIB,
+            METADATA_CID              
         );
 
         bool ok = rhinoToken.transfer(address(presale), TOKENS_FOR_SALE);
@@ -57,7 +59,8 @@ contract DeployPresale is Script {
             HARD_CAP_WEI,            
             SOFT_CAP_WEI,             
             MIN_CONTRIB,              
-            MAX_CONTRIB              
+            MAX_CONTRIB,
+            METADATA_CID              
         );
 
         bool ok = rhinoToken.transfer(address(presale), TOKENS_FOR_SALE);

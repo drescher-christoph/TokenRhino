@@ -59,7 +59,8 @@ contract PresaleFactory is Ownable, ReentrancyGuard {
         uint256 _hardCapWei,
         uint256 _softCapWei,
         uint256 _minContribution,
-        uint256 _maxContribution
+        uint256 _maxContribution,
+        string memory _metadataCID
     ) public payable returns (address presale) {
         // Fee
         require(msg.value >= createFeeWei, "create fee required");
@@ -91,7 +92,8 @@ contract PresaleFactory is Ownable, ReentrancyGuard {
             _hardCapWei,
             _softCapWei,
             _minContribution,
-            _maxContribution
+            _maxContribution,
+            _metadataCID
         );
 
         presale = address(newPresale);

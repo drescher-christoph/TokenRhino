@@ -62,6 +62,8 @@ const Home = () => {
               change={'+12'}
               raised={presale.raised ? `${(Number(presale.raised) / 1e18).toFixed(2)} ETH` : '0 ETH'}
               goal={presale.hardCap ? `${(Number(presale.hardCap) / 1e18).toFixed(2)} ETH` : 'N/A'}
+              metadataCID={presale.metadataCID}
+              contract={presale.presale}
             />
           ))}
       </div>

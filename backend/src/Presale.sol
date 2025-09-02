@@ -89,6 +89,7 @@ contract Presale is Ownable, ReentrancyGuard {
 
     bool public s_finalized;
     string public s_tokenName;
+    string public s_metaDataCID;
     PresaleState public s_presaleState;
     uint256 public s_totalRaisedWei; //gross amount of wei raised in the presale
     uint256 public s_totalSold; // total amount of tokens sold
@@ -153,6 +154,7 @@ contract Presale is Ownable, ReentrancyGuard {
      * @param _hardCapWei the hard cap of the presale in wei (1 ETH = 1e18 wei)
      * @param _maxContribution the maximum amount of wei that can be contributed by a single address in the presale (1 ETH = 1e18 wei), can be set to 0 for no limit
      * @param _minContribution the minimum amount of wei that can be contributed by a single address in the presale (1 ETH = 1e18 wei), can be set to 0 for no limit
+     * @param _metadataCID the CID of the metadata of the presale (stored on IPFS)
      */
     constructor(
         address _owner,
@@ -163,7 +165,8 @@ contract Presale is Ownable, ReentrancyGuard {
         uint256 _hardCapWei,
         uint256 _softCapWei,
         uint256 _minContribution,
-        uint256 _maxContribution
+        uint256 _maxContribution,
+        string memory _metadataCID
     ) Ownable(_owner) {
         require(_hardCapWei > 0);
         require(_tokenSupplyInUnits > 0);
@@ -172,6 +175,7 @@ contract Presale is Ownable, ReentrancyGuard {
         i_saleToken = IERC20(_tokenAddress);
         i_tokensForSaleUnits = _tokenSupplyInUnits;
         s_tokenName = _tokenName;
+        s_metaDataCID = _metadataCID;
         i_hardCapWei = _hardCapWei;
         i_softCapWei = _softCapWei;
         i_maxContributionWei = _maxContribution;
@@ -369,5 +373,9 @@ contract Presale is Ownable, ReentrancyGuard {
 
     function getTotalRaisedWei() external view returns (uint256) {
         return s_totalRaisedWei;
+    }
+
+    function getMetaDataCID() external view returns (string memory) {
+        return s_metaDataCID;
     }
 }

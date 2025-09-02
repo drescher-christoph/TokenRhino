@@ -25,7 +25,8 @@ contract PresaleFactoryTest is Test {
     uint256 constant HARD_CAP_WEI    = 50 ether;       
     uint256 constant SOFT_CAP_WEI    = 30 ether;        
     uint256 constant MIN_CONTRIB     = 0.05 ether;     
-    uint256 constant MAX_CONTRIB     = 15 ether;        
+    uint256 constant MAX_CONTRIB     = 15 ether;   
+    string constant METADATA_CID     = "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG";       
 
     address public FACTORY_OWNER = makeAddr("factory_owner");
     address public PRESALE_OWNER = makeAddr("presale_owner");
@@ -73,7 +74,8 @@ contract PresaleFactoryTest is Test {
             HARD_CAP_WEI,
             SOFT_CAP_WEI,
             MIN_CONTRIB,
-            MAX_CONTRIB
+            MAX_CONTRIB,
+            METADATA_CID
         );
         presale = Presale(presaleAddress);
 
@@ -104,7 +106,8 @@ contract PresaleFactoryTest is Test {
             HARD_CAP_WEI,
             SOFT_CAP_WEI,
             MIN_CONTRIB,
-            MAX_CONTRIB
+            MAX_CONTRIB,
+            METADATA_CID
         );
         presale = Presale(presaleAddress);
 
@@ -151,7 +154,8 @@ contract PresaleFactoryTest is Test {
             HARD_CAP_WEI,
             SOFT_CAP_WEI,
             MIN_CONTRIB,
-            MAX_CONTRIB
+            MAX_CONTRIB,
+            METADATA_CID
         );
         presale = Presale(presaleAddress);
 

@@ -16,16 +16,17 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import DeployingAnimation from "../components/DeployingAnimation";
 import { create } from "@storacha/client";
 import { Web3Storage } from "web3.storage";
+import { createPresaleMetadata } from "../lib/metadata";
+import { uploadJsonToPinata } from "../services/ipfsService";
 
 // === CONFIG ===
-const FACTORY_ADDRESS = "0x8DBF8B55F53667726C0764f50179409Fd9245e5C";
+const FACTORY_ADDRESS = "0x84210d715b99C9f3E67AE577890c0F96C75C883c";
 const REQUIRED_CHAIN_ID = 11155111; // z.B. Sepolia
 const CREATE_FEE_ETH = "0.01";
 
 // localStorage keys (wie zuvor)
 const LS_TOKEN = "createDraftToken";
 const LS_CFG = "createDraftCfg";
-
 
 // Hilfsfunktionen
 function readDraft(key, fallback = {}) {
@@ -54,6 +55,9 @@ function toWeiOrZero(x) {
 }
 
 export default function CreateWallet() {
+  const [isUploadingMetadata, setIsUploadingMetadata] = useState(false);
+  const [metadataHash, setMetadataHash] = useState("");
+
   const navigate = useNavigate();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
@@ -149,17 +153,31 @@ export default function CreateWallet() {
     }
 
     try {
+      setIsUploadingMetadata(true);
+      const metadata = createPresaleMetadata(token, cfg);
+
+      const ipfsResult = await uploadJsonToPinata(metadata, {
+        name: `${token.name}-metadata.json`,
+      });
+
+      setMetadataHash(ipfsResult.ipfsHash);
+      console.log("✅ Metadata auf IPFS gespeichert:", ipfsResult.ipfsHash);
+
       writeContract({
         address: FACTORY_ADDRESS,
         abi: PresaleFactoryAbi,
         functionName: "createPresale",
-        args: argsOrError.args,
+        args: [...argsOrError.args, ipfsResult.ipfsHash],
         value: parseEther(CREATE_FEE_ETH), // 0.01 ETH
       });
     } catch (err) {
+      console.error("Metadata Upload Fehler:", err);
       setUiError(err?.shortMessage || err?.message || "Send failed");
+      setIsUploadingMetadata(false);
     }
   };
+
+  const isProcessing = isPending || waiting || isUploadingMetadata;
 
   useEffect(() => {
     if (isSuccess && receipt) {
@@ -192,18 +210,18 @@ export default function CreateWallet() {
   }
 
   function findPresaleCreated(logs) {
-  for (const log of logs) {
-    try {
-      const decoded = decodeEventLog({
-        abi: [presaleCreatedEventAbi],
-        data: log.data,
-        topics: log.topics,
-      });
-      if (decoded) return decoded;
-    } catch {}
+    for (const log of logs) {
+      try {
+        const decoded = decodeEventLog({
+          abi: [presaleCreatedEventAbi],
+          data: log.data,
+          topics: log.topics,
+        });
+        if (decoded) return decoded;
+      } catch {}
+    }
+    return null;
   }
-  return null;
-}
 
   // UI
   const wrongChain = isConnected && chainId !== REQUIRED_CHAIN_ID;
@@ -214,9 +232,19 @@ export default function CreateWallet() {
       <div className="mt-8 max-w-2xl mx-auto">
         <h1 className="text-white text-2xl font-bold mb-4">Connect & Deploy</h1>
 
-        {waiting ? (
+        {isProcessing ? (
           <>
             <DeployingAnimation />
+            {isUploadingMetadata && (
+              <p className="text-center text-blue-400 mt-4">
+                📤 Lade Metadata auf IPFS hoch...
+              </p>
+            )}
+            {metadataHash && (
+              <p className="text-center text-green-400 mt-2">
+                ✅ Metadata CID: {metadataHash.substring(0, 12)}...
+              </p>
+            )}
           </>
         ) : (
           <div className="space-y-3 text-sm">
@@ -282,7 +310,13 @@ export default function CreateWallet() {
                   : "bg-[#00E3A5] text-black hover:bg-[#00C896]"
               }`}
             >
-              {isPending || waiting ? "Deploying…" : "Pay 0.01 ETH & Deploy"}
+              {isUploadingMetadata
+                ? "📤 Uploading Metadata..."
+                : isPending
+                  ? "⏳ Deploying Contract..."
+                  : waiting
+                    ? "✅ Waiting for Confirmation..."
+                    : "🚀 Pay 0.01 ETH & Deploy"}
             </button>
           )}
         </div>

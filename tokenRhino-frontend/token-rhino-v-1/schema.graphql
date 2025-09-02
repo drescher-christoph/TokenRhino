@@ -77,6 +77,9 @@ type Presale @entity(immutable: true) {
   createdAt: BigInt!
   factoryEvent: PresaleCreated! # 1:1 Beziehung
 
+  # Neue Fields für Metadata
+  metadataCID: String  # IPFS CID/Hash
+
   # From the Presale contract:
   tokensForSaleUnits: BigInt
   tokensPerEth: BigInt

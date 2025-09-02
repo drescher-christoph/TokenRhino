@@ -53,6 +53,7 @@ export const PresaleFactoryAbi = [
         type: "uint256",
         internalType: "uint256",
       },
+      { name: "_metadataCID", type: "string", internalType: "string" },
     ],
     outputs: [{ name: "presale", type: "address", internalType: "address" }],
     stateMutability: "payable",

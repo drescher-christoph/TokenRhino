@@ -213,5 +213,10 @@ export function handlePresaleCreated(event: PresaleCreatedEvent): void {
     presale.maxContribution = maxContrib.value
   }
 
+  let metadataCID = presaleContract.try_s_metaDataCID()
+  if (!metadataCID.reverted) {
+    presale.metadataCID = metadataCID.value
+  }
+
   presale.save()
 }

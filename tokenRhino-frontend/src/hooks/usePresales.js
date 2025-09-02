@@ -21,6 +21,7 @@ const PRESALES_QUERY = gql`
       endTime
       minContribution
       maxContribution
+      metadataCID
       createdAt
       createdAtBlock
       tokenInfo {

@@ -27,7 +27,7 @@ export default function LivePreview({ token, cfg }) {
     <Card title="Live Preview" className="sticky top-28">
       <div className="flex items-center gap-3">
         <div className="relative w-12 h-12">
-          {/* <div className="w-12 h-12 rounded-full bg-[#1A1F29] border border-[#23272F]" /> */}
+          <div className="w-12 h-12 rounded-full bg-[#1A1F29] border border-[#23272F]" />
           {token.logoUrl && (
             <img
               src={token.logoUrl}

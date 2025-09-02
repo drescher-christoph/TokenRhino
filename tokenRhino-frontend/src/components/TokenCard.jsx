@@ -1,8 +1,13 @@
 import React from "react";
+import { usePresaleMetadata } from "../hooks/usePresaleMetadata";
+import { meta } from "@eslint/js";
+import { m } from "framer-motion";
 
-const TokenCard = ({ logo, name, symbol, price, change, raised, goal }) => {
+const TokenCard = ({ logo, name, symbol, price, change, raised, goal, metadataCID, contract }) => {
   // Bestimmen der Textfarbe abhängig vom 24h Change
   const changeColor = change >= 0 ? "text-green-400" : "text-red-400";
+
+  const { metadata, loading, error} = usePresaleMetadata(metadataCID, contract);
 
   // Prozentualer Fortschritt der Presale-Raise
   const progress = Math.min((raised / goal) * 100, 100);
@@ -14,12 +19,20 @@ const TokenCard = ({ logo, name, symbol, price, change, raised, goal }) => {
     return num.toFixed(2);
   }
 
+  if (loading) {
+    return (
+      <div className="bg-[#161B22] border border-[#23272F] rounded-2xl p-5 shadow-md w-full max-w-sm">
+        <p className="text-gray-400 text-center">Loading metadata...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[#161B22] border border-[#23272F] rounded-2xl p-5 shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 ease-in-out w-full max-w-sm">
       {/* Token Logo + Name */}
       <div className="flex items-center gap-3">
         <img
-          src={logo}
+          src={metadata?.image || logo}
           alt={`${name} logo`}
           className="w-12 h-12 rounded-full border border-[#23272F]"
         />
