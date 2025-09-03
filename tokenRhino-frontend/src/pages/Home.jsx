@@ -17,7 +17,7 @@ const Home = () => {
       {/* HERO SECTION */}
       <div className="flex flex-col justify-center items-center mb-10">
         <div className="text-center space-y-4 mt-8">
-          {/* <img className="w-48 h-48 mx-auto" src={logo} alt="Logo" /> */}
+          {/* <img className="w-36 h-36 mx-auto" src={logo} alt="Logo" /> */}
           <h2 className="text-white font-extrabold text-5xl sm:text-6xl tracking-tight">
             Explore Live Token Presales
           </h2>
@@ -55,6 +55,7 @@ const Home = () => {
           presales.map((presale) => (
             <TokenCard
               key={presale.id}
+              id={presale.id}
               logo={`https://avatars.dicebear.com/api/identicon/${presale.presale}.svg`}
               name={presale.tokenInfo?.name || 'Unknown Token'}
               symbol={presale.tokenInfo?.symbol || 'N/A'}

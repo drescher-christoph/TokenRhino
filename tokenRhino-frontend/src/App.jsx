@@ -12,6 +12,7 @@ import CreatePresaleReview from "./pages/CreatePresaleReview";
 import CreateWallet from "./pages/CreateWallet";
 import FundContract from "./pages/FundContract";
 import PresaleSuccess from "./pages/PresaleSuccess";
+import PresaleDetail from "./pages/PresaleDetail";
 import "@rainbow-me/rainbowkit/styles.css";
 import {
   getDefaultConfig,
@@ -61,7 +62,7 @@ function App() {
                 />
                 <Route path="/create-presale/fund" element={<FundContract />} />
                 <Route path="/create-presale/success" element={<PresaleSuccess />} />
-
+                <Route path="/presale/:address" element={<PresaleDetail />} />
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/docs" element={<Docs />} />
               </Routes>
