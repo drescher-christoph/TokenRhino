@@ -1,5 +1,7 @@
-import React from "react";
+import { useState, useEffect } from "react";
 import { usePresaleMetadata } from "../hooks/usePresaleMetadata";
+import { PresaleAbi } from "../abi/Presale";
+import { ethers } from "ethers";
 import { Link } from "react-router-dom";
 import { meta } from "@eslint/js";
 import { m } from "framer-motion";
@@ -11,13 +13,41 @@ const TokenCard = ({
   symbol,
   price,
   change,
-  raised,
   goal,
   metadataCID,
   contract,
 }) => {
   // Bestimmen der Textfarbe abhängig vom 24h Change
   const changeColor = change >= 0 ? "text-green-400" : "text-red-400";
+
+  const [raisedDirect, setRaisedDirect] = useState(null);
+
+  useEffect(() => {
+    async function fetchRaised() {
+      if (!id) return;
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const presaleContract = new ethers.Contract(id, PresaleAbi, provider);
+        const raised = await presaleContract.s_totalRaisedWei();
+        setRaisedDirect(raised);
+      } catch (err) {
+        console.error("Error fetching raised from contract:", err);
+      }
+    }
+    fetchRaised();
+  }, [id]);
+
+  function formatCompactNumber(num) {
+    if (num >= 1e9) return (num / 1e9).toFixed(2) + "B";
+    if (num >= 1e6) return (num / 1e6).toFixed(2) + "M";
+    if (num >= 1e3) return (num / 1e3).toFixed(2) + "k";
+    return num.toFixed(2);
+  }
+
+  const raisedEth = raisedDirect ? Number(ethers.formatUnits(raisedDirect)) : 0;
+  const goalEth = goal ? Number(goal) : 0;
+  const progress =
+    (Number.parseFloat(raisedEth) / Number.parseFloat(goal)) * 100;
 
   const { metadata, loading, error } = usePresaleMetadata(
     metadataCID,
@@ -31,22 +61,11 @@ const TokenCard = ({
     symbol,
     price,
     change,
-    raised,
     goal,
     metadataCID,
     contract,
-    metadata 
+    metadata,
   };
-
-  // Prozentualer Fortschritt der Presale-Raise
-  const progress = Math.min((raised / goal) * 100, 100);
-
-  function formatCompactNumber(num) {
-    if (num >= 1e9) return (num / 1e9).toFixed(2) + "B";
-    if (num >= 1e6) return (num / 1e6).toFixed(2) + "M";
-    if (num >= 1e3) return (num / 1e3).toFixed(2) + "k";
-    return num.toFixed(2);
-  }
 
   if (loading) {
     return (
@@ -93,7 +112,7 @@ const TokenCard = ({
           <div className="flex justify-between mb-1">
             <span className="text-gray-400 text-xs">Raised </span>
             <span className="text-gray-400 text-xs">
-              {raised} / {goal} ETH
+              {formatCompactNumber(raisedEth)} / {goal} ETH
             </span>
           </div>
           <div className="w-full bg-[#1A1D24] rounded-full h-2">
@@ -101,6 +120,9 @@ const TokenCard = ({
               className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full"
               style={{ width: `${progress}%` }}
             ></div>
+          </div>
+          <div className="flex justify-end text-xs text-gray-400 mt-1">
+            <span>{progress.toFixed(1)}% Complete</span>
           </div>
         </div>
 

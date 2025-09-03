@@ -12,6 +12,8 @@ const PRESALE_QUERY = `
     tokensPerEth
     metadataCID
     raised
+    finalized
+    state
     softCap
     hardCap
     minContribution

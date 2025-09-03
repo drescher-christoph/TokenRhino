@@ -218,5 +218,20 @@ export function handlePresaleCreated(event: PresaleCreatedEvent): void {
     presale.metadataCID = metadataCID.value
   }
 
+  let raised = presaleContract.try_s_totalRaisedWei()
+  if (!raised.reverted) {
+    presale.raised = raised.value
+  }
+
+  let state = presaleContract.try_s_presaleState()
+  if (!state.reverted) {
+    presale.state = state.value
+  }
+
+  let finalized = presaleContract.try_s_finalized()
+  if (!finalized.reverted) {
+    presale.finalized = finalized.value
+  }
+
   presale.save()
 }

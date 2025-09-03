@@ -52,7 +52,10 @@ const PresaleDetail = () => {
   } = usePresaleMetadata(presale?.metadataCID, presale?.token);
   const [amount, setAmount] = useState("");
 
+  const [raisedDirect, setRaisedDirect] = useState(null);
+
   const quickAmounts = ["Min", "0.1", "1", "5", "Max"];
+  const presaleStates = ["Active", "Claimable", "Refundable"];
 
   // wagmi: write + receipt
   const {
@@ -69,6 +72,22 @@ const PresaleDetail = () => {
     hash: txHash,
     query: { enabled: !!txHash },
   });
+
+  useEffect(() => {
+    async function fetchRaised() {
+      if (!presale?.id || !account?.address) return;
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(presale.id, PresaleAbi, provider);
+        const raised = await contract.s_totalRaisedWei();
+        setRaisedDirect(raised);
+        console.log("Direct from contract:", raised.toString());
+      } catch (err) {
+        console.error("Error fetching raised from contract:", err);
+      }
+    }
+    fetchRaised();
+  }, [presale?.id, account?.address]);
 
   function formatCompactNumber(num) {
     if (num >= 1e9) return (num / 1e9).toFixed(2) + "B";
@@ -91,7 +110,7 @@ const PresaleDetail = () => {
     console.error("Metadata error:", metadataError);
   }
 
-    console.log("Presale data:", presale);
+  console.log("Presale data:", presale);
   //   console.log("Metadata:", metadata);
   //   console.log("Wallet Balance:", balance);
 
@@ -103,7 +122,7 @@ const PresaleDetail = () => {
   };
 
   const progressPercentage =
-    (Number.parseFloat(presale.raised) / Number.parseFloat(presale.hardcap)) *
+    (Number.parseFloat(raisedDirect) / Number.parseFloat(presale.hardCap)) *
     100;
 
   const handleQuickAmount = (amount) => {
@@ -134,7 +153,7 @@ const PresaleDetail = () => {
         address: presale.id,
         abi: PresaleAbi,
         functionName: "buyTokens",
-        value: ethValue, 
+        value: ethValue,
       });
     } catch (err) {
       console.error("Error buying tokens:", err);
@@ -175,7 +194,7 @@ const PresaleDetail = () => {
                       variant="outline"
                       className="border-green-400 text-green-400 bg-green-400/10"
                     >
-                      {"Live"}
+                      {presaleStates[presale.state]}
                     </Badge>
                   </div>
                   <p className="text-gray-400 text-pretty">
@@ -236,7 +255,7 @@ const PresaleDetail = () => {
                   <div className="space-y-2">
                     <p className="text-sm text-gray-400">Status</p>
                     <Badge className="bg-green-400/10 text-green-400 border-green-400">
-                      {"Live"}
+                      {presaleStates[presale.state]}
                     </Badge>
                   </div>
                 </div>
@@ -245,7 +264,7 @@ const PresaleDetail = () => {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Raised</span>
                     <span className="font-medium text-white">
-                      {presale.raised ? ethers.formatUnits(presale.raised) : 0}{" "}
+                      {raisedDirect ? ethers.formatUnits(raisedDirect) : 0}{" "}
                       / {ethers.formatUnits(presale.hardCap)} ETH
                     </span>
                   </div>
@@ -402,7 +421,11 @@ const PresaleDetail = () => {
                   size="lg"
                   onClick={handleBuyTokens}
                 >
-                    {isPending ? "Processing..." : waiting ? "Confirming..." : "Join Presale"}
+                  {isPending
+                    ? "Processing..."
+                    : waiting
+                      ? "Confirming..."
+                      : "Join Presale"}
                 </Button>
 
                 <div className="space-y-1 text-xs text-gray-400">

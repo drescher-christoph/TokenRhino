@@ -11,8 +11,8 @@ contract DeployMockERC20 is Script {
     function run() external returns (ERC20Mock) {
         vm.startBroadcast();
         ERC20Mock token = new ERC20Mock(
-            "Niggersaurus",
-            "NGR",
+            "Chill Guy",
+            "CHILL",
             msg.sender, 
             1_000_000_000 ether 
         );

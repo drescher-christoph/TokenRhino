@@ -89,8 +89,10 @@ type Presale @entity(immutable: true) {
   endTime: BigInt
   minContribution: BigInt
   maxContribution: BigInt
+  finalized: Boolean
 
   # Running metrics:
+  state: Int
   raised: BigInt        
   createdAtBlock: BigInt
   createdAtTimestamp: BigInt

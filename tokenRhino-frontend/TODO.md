@@ -8,5 +8,5 @@ TokenRhino ist eine Plattform für Token-Presales, die es Nutzern ermöglicht, f
 - [ ] Presale State von subgraph fetchen in UX verwenden
 - [ ] Buy Token UX verbessern
 - [ ] Portfolio User Investments implementieren
-- [ ] 
+- [ ] Improve reponsive design
 

@@ -33,6 +33,7 @@ contract PresaleFactory is Ownable, ReentrancyGuard {
     event FeeReceived(address indexed presale, uint256 amount);
     event CreateFeePaid(address creator, uint256 createFeeWei);
     event CreateFeeUpdated(uint256 newFee);
+    event BuyFeeUpdated(uint16 newBuyFee);
     event PolicyUpdated(/* … */);
 
     constructor(uint16 _tokenFee, uint256 _createFeeWei) Ownable(msg.sender) {
@@ -116,6 +117,11 @@ contract PresaleFactory is Ownable, ReentrancyGuard {
     function setCreateFee(uint256 _newFee) public onlyOwner {
         createFeeWei = _newFee;
         emit CreateFeeUpdated(_newFee);
+    }
+
+    function setBuyFee(uint16 _newBuyFee) public onlyOwner {
+        feeBps = _newBuyFee;
+        emit BuyFeeUpdated(_newBuyFee);
     }
 
     /////////////////////////////////////
