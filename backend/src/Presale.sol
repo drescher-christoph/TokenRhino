@@ -232,6 +232,7 @@ contract Presale is Ownable, ReentrancyGuard {
         if (!success) {
             revert Presale__FeeTransferFailed();
         }
+        _updateStatus();
     }
 
     /**

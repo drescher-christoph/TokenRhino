@@ -17,6 +17,7 @@ const PRESALES_QUERY = gql`
       raised
       softCap
       hardCap
+      state
       startTime
       endTime
       minContribution

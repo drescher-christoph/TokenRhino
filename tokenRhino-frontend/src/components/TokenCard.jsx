@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { usePresaleMetadata } from "../hooks/usePresaleMetadata";
 import { PresaleAbi } from "../abi/Presale";
+import { timeRemaining, formatUnixTime } from "../lib/time";
+import { useAccount, useReadContract } from "wagmi";
 import { ethers } from "ethers";
 import { Link } from "react-router-dom";
 import { meta } from "@eslint/js";
 import { m } from "framer-motion";
+import { Badge } from "./Badge";
 
 const TokenCard = ({
   id,
@@ -13,14 +16,36 @@ const TokenCard = ({
   symbol,
   price,
   change,
+  state,
+  endTime,
   goal,
   metadataCID,
   contract,
 }) => {
-  // Bestimmen der Textfarbe abhängig vom 24h Change
-  const changeColor = change >= 0 ? "text-green-400" : "text-red-400";
 
   const [raisedDirect, setRaisedDirect] = useState(null);
+  const account = useAccount();
+
+  const statusColor = (s) =>
+    s === 0 ? "green" : s === 1 ? "indigo" : s === 2 ? "yellow" : "gray";
+  const changeColor = change >= 0 ? "text-green-400" : "text-red-400";
+  const presaleStates = ["Active", "Claimable", "Refundable"];
+
+  const { data: presaleState } = useReadContract({
+      address: id,
+      abi: PresaleAbi,
+      functionName: "s_presaleState",
+      watch: true,
+      enabled: !!id && !!account?.address,
+    });
+  
+    const { data: presaleFinalized } = useReadContract({
+      address: id,
+      abi: PresaleAbi,
+      functionName: "s_finalized",
+      watch: true,
+      enabled: !!id && !!account?.address,
+    });
 
   useEffect(() => {
     async function fetchRaised() {
@@ -112,7 +137,7 @@ const TokenCard = ({
           <div className="flex justify-between mb-1">
             <span className="text-gray-400 text-xs">Raised </span>
             <span className="text-gray-400 text-xs">
-              {formatCompactNumber(raisedEth)} / {goal} ETH
+              {formatCompactNumber(raisedEth)} / {goal}
             </span>
           </div>
           <div className="w-full bg-[#1A1D24] rounded-full h-2">
@@ -126,10 +151,10 @@ const TokenCard = ({
           </div>
         </div>
 
-        {/* Join Presale Button */}
-        <button className="mt-5 w-full py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold rounded-lg transition-all duration-300">
-          Join Presale
-        </button>
+        <div className="mt-5 w-full flex flex-row justify-between items-center">
+          <Badge color={statusColor(state)}>{presaleStates[presaleState]}</Badge>
+          <Badge color="indigo">{timeRemaining(Number(endTime) * 1000)}</Badge>
+        </div>
       </div>
     </Link>
   );

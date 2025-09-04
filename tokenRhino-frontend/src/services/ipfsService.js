@@ -140,7 +140,7 @@ export async function fetchPresaleMetadata(ipfsHashOrUrl) {
     }
 
     const metadata = await response.json();
-    console.log('✅ Metadata erfolgreich geladen:', metadata);
+    console.log('✅ Metadata erfolgreich geladen');
     
     return metadata;
     

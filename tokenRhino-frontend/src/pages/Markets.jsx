@@ -1,6 +1,8 @@
 // src/pages/Markets.jsx
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { Badge } from "../components/Badge";
+import { Chip } from "../components/Chip";
 
 const dummyPresales = [
   {
@@ -57,10 +59,6 @@ const dummyPresales = [
   },
 ];
 
-function classNames(...xs) {
-  return xs.filter(Boolean).join(" ");
-}
-
 function timeRemaining(ms) {
   const diff = ms - Date.now();
   if (diff <= 0) return "Ended";
@@ -72,34 +70,7 @@ function timeRemaining(ms) {
   return `${m}m`;
 }
 
-const Chip = ({ active, onClick, children }) => (
-  <button
-    onClick={onClick}
-    className={classNames(
-      "px-4 py-2 rounded-full border transition",
-      active
-        ? "bg-indigo-600 border-indigo-600 text-white"
-        : "bg-[#0C0E13] border-[#23272F] text-gray-300 hover:border-gray-500"
-    )}
-  >
-    {children}
-  </button>
-);
 
-const Badge = ({ color = "indigo", children }) => {
-  const map = {
-    green: "bg-green-500/15 text-green-300 border-green-500/20",
-    red: "bg-red-500/15 text-red-300 border-red-500/20",
-    yellow: "bg-yellow-500/15 text-yellow-200 border-yellow-500/20",
-    indigo: "bg-indigo-500/15 text-indigo-300 border-indigo-500/20",
-    gray: "bg-gray-500/15 text-gray-300 border-gray-500/20",
-  };
-  return (
-    <span className={classNames("px-2 py-1 rounded border text-xs", map[color])}>
-      {children}
-    </span>
-  );
-};
 
 const Progress = ({ value, max }) => {
   const pct = Math.max(0, Math.min(100, (value / max) * 100));

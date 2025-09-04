@@ -3,11 +3,13 @@ import { usePresale } from "../hooks/usePresale";
 import { usePresaleMetadata } from "../hooks/usePresaleMetadata";
 import { use, useEffect, useState } from "react";
 import { PresaleAbi } from "../abi/Presale";
+import { formatUnixTime } from "../lib/time";
 import { ethers } from "ethers";
 import {
   useBalance,
   useAccount,
   useWriteContract,
+  useReadContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { Button } from "@/components/ui/button";
@@ -53,6 +55,40 @@ const PresaleDetail = () => {
   const [amount, setAmount] = useState("");
 
   const [raisedDirect, setRaisedDirect] = useState(null);
+
+  const { data: contributedWei } = useReadContract({
+    address: presale?.id,
+    abi: PresaleAbi,
+    functionName: "s_contributedWei",
+    args: [account.address],
+    watch: true,
+    enabled: !!presale?.id && !!account?.address,
+  });
+
+  const { data: purchasedTokens } = useReadContract({
+    address: presale?.id,
+    abi: PresaleAbi,
+    functionName: "s_purchased",
+    args: [account.address],
+    watch: true,
+    enabled: !!presale?.id && !!account?.address,
+  });
+
+  const { data: presaleState } = useReadContract({
+    address: presale?.id,
+    abi: PresaleAbi,
+    functionName: "s_presaleState",
+    watch: true,
+    enabled: !!presale?.id && !!account?.address,
+  });
+
+  const { data: presaleFinalized } = useReadContract({
+    address: presale?.id,
+    abi: PresaleAbi,
+    functionName: "s_finalized",
+    watch: true,
+    enabled: !!presale?.id && !!account?.address,
+  });
 
   const quickAmounts = ["Min", "0.1", "1", "5", "Max"];
   const presaleStates = ["Active", "Claimable", "Refundable"];
@@ -194,7 +230,7 @@ const PresaleDetail = () => {
                       variant="outline"
                       className="border-green-400 text-green-400 bg-green-400/10"
                     >
-                      {presaleStates[presale.state]}
+                      {presaleStates[presaleState]}
                     </Badge>
                   </div>
                   <p className="text-gray-400 text-pretty">
@@ -255,7 +291,7 @@ const PresaleDetail = () => {
                   <div className="space-y-2">
                     <p className="text-sm text-gray-400">Status</p>
                     <Badge className="bg-green-400/10 text-green-400 border-green-400">
-                      {presaleStates[presale.state]}
+                      {presaleStates[presaleState]}
                     </Badge>
                   </div>
                 </div>
@@ -264,8 +300,8 @@ const PresaleDetail = () => {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Raised</span>
                     <span className="font-medium text-white">
-                      {raisedDirect ? ethers.formatUnits(raisedDirect) : 0}{" "}
-                      / {ethers.formatUnits(presale.hardCap)} ETH
+                      {raisedDirect ? ethers.formatUnits(raisedDirect) : 0} /{" "}
+                      {ethers.formatUnits(presale.hardCap)} ETH
                     </span>
                   </div>
                   <div className="w-full bg-[#1A1D24] rounded-full h-3">
@@ -304,7 +340,7 @@ const PresaleDetail = () => {
                       Start Time
                     </p>
                     <p className="font-semibold text-white">
-                      {presale.startTime}
+                      {formatUnixTime(presale.startTime)}
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -313,7 +349,7 @@ const PresaleDetail = () => {
                       End Time
                     </p>
                     <p className="font-semibold text-white">
-                      {presale.endTime}
+                      {formatUnixTime(presale.endTime)}
                     </p>
                   </div>
                 </div>
@@ -372,11 +408,13 @@ const PresaleDetail = () => {
           <div className="space-y-6">
             <Card className="sticky top-6 bg-[#161B22] border border-[#23272F]">
               <CardHeader>
-                <CardTitle className="text-white">Join Presale</CardTitle>
+                <CardTitle className="text-white">
+                  {presaleFinalized ? "Claim Token" : "Join Presale"}
+                </CardTitle>
                 <p className="text-sm text-gray-400">
-                  Balance:{" "}
-                  {balance ? ethers.formatUnits(balance.value).slice(0, 4) : 0}{" "}
-                  ETH
+                  {presaleFinalized
+                    ? `Purchased Tokens: ${purchasedTokens} ${presale.tokenInfo.symbol}`
+                    : `Balance: ${balance ? ethers.formatUnits(balance.value).slice(0, 4) : 0} ETH`}
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -410,7 +448,9 @@ const PresaleDetail = () => {
                 <Separator className="bg-[#23272F]" />
 
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-400">You get</p>
+                  <p className="text-sm text-gray-400">
+                    {presale.finalized ? "Claimable" : "You get"}
+                  </p>
                   <p className="text-2xl font-bold text-white">
                     {calculateTokens(ethAmount)} {presale.tokenInfo.symbol}
                   </p>
