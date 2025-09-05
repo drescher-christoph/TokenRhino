@@ -90,6 +90,22 @@ const PresaleDetail = () => {
     enabled: !!presale?.id && !!account?.address,
   });
 
+  const { data: totalSaleSupply } = useReadContract({
+    address: presale?.id,
+    abi: PresaleAbi,
+    functionName: "i_tokensForSaleUnits",
+    watch: false,
+    enabled: !!presale?.id && !!account?.address,
+  });
+
+  const { data: totalTokensSold } = useReadContract({
+    address: presale?.id,
+    abi: PresaleAbi,
+    functionName: "s_totalSold",
+    watch: true,
+    enabled: !!presale?.id && !!account?.address,
+  });
+
   const quickAmounts = ["Min", "0.1", "1", "5", "Max"];
   const presaleStates = ["Active", "Claimable", "Refundable"];
 
@@ -164,11 +180,26 @@ const PresaleDetail = () => {
   const handleQuickAmount = (amount) => {
     switch (amount) {
       case "Min":
-        setEthAmount(presale.minContribution);
+        setEthAmount(ethers.formatUnits(presale.minContribution, 18));
         break;
-      case "Max":
-        setEthAmount(presale.maxContribution);
+
+      case "Max": {
+        const tokensLeft = totalSaleSupply - totalTokensSold;
+        const remainingEth = Number(tokensLeft) / Number(presale.tokensPerEth);
+
+        if (presale.maxContribution !== "0") {
+          const maxEth = Number(
+            ethers.formatUnits(presale.maxContribution, 18)
+          );
+
+          const investable = Math.min(remainingEth, maxEth);
+          setEthAmount(String(investable));
+        } else {
+          setEthAmount(String(remainingEth));
+        }
         break;
+      }
+
       default:
         setEthAmount(amount);
     }
@@ -177,6 +208,13 @@ const PresaleDetail = () => {
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
   };
+
+  function formatCompactNumber(num) {
+    if (num >= 1e9) return (num / 1e9).toFixed(2) + "B";
+    if (num >= 1e6) return (num / 1e6).toFixed(2) + "M";
+    if (num >= 1e3) return (num / 1e3).toFixed(2) + "k";
+    return num.toFixed(2);
+  }
 
   const handleBuyTokens = () => {
     if (!walletIsConnected) {
@@ -193,6 +231,22 @@ const PresaleDetail = () => {
       });
     } catch (err) {
       console.error("Error buying tokens:", err);
+    }
+  };
+
+  const handleClaimTokens = () => {
+    if (!walletIsConnected) {
+      alert("Please connect your wallet first.");
+      return;
+    }
+    try {
+      writeContract({
+        address: presale.id,
+        abi: PresaleAbi,
+        functionName: "claimTokens",
+      });
+    } catch (err) {
+      console.error("Error claiming tokens:", err);
     }
   };
 
@@ -395,6 +449,12 @@ const PresaleDetail = () => {
                       variant="ghost"
                       size="icon"
                       className="text-gray-400 hover:bg-[#23272F]"
+                      onClick={() =>
+                        window.open(
+                          `https://sepolia.etherscan.io/address/${presale.id}`,
+                          "_blank"
+                        )
+                      }
                     >
                       <ExternalLink className="h-4 w-4" />
                     </Button>
@@ -413,59 +473,70 @@ const PresaleDetail = () => {
                 </CardTitle>
                 <p className="text-sm text-gray-400">
                   {presaleFinalized
-                    ? `Purchased Tokens: ${purchasedTokens} ${presale.tokenInfo.symbol}`
+                    ? `Invested: ${contributedWei ? ethers.formatEther(contributedWei) : "0"} ETH`
                     : `Balance: ${balance ? ethers.formatUnits(balance.value).slice(0, 4) : 0} ETH`}
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white">
-                    Amount in ETH
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="0.0"
-                    value={ethAmount}
-                    onChange={(e) => setEthAmount(e.target.value)}
-                    className="text-lg bg-[#151821] border border-[#23272F] text-white"
-                  />
-                </div>
+                {!presaleFinalized && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-white">
+                        Amount in ETH
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="0.0"
+                        value={ethAmount}
+                        onChange={(e) => setEthAmount(e.target.value)}
+                        className="text-lg bg-[#151821] border border-[#23272F] text-white"
+                      />
+                    </div>
 
-                <div className="flex gap-2">
-                  {quickAmounts.map((amount) => (
-                    <Button
-                      key={amount}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 border-[#23272F] bg-[#151821] text-gray-400 hover:bg-[#23272F]"
-                      onClick={() => handleQuickAmount(amount)}
-                    >
-                      {amount}
-                    </Button>
-                  ))}
-                </div>
+                    <div className="flex gap-2">
+                      {quickAmounts.map((amount) => (
+                        <Button
+                          key={amount}
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 border-[#23272F] bg-[#151821] text-gray-400 hover:bg-[#23272F]"
+                          onClick={() => handleQuickAmount(amount)}
+                        >
+                          {amount}
+                        </Button>
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 <Separator className="bg-[#23272F]" />
 
                 <div className="space-y-2">
                   <p className="text-sm text-gray-400">
-                    {presale.finalized ? "Claimable" : "You get"}
+                    {presaleFinalized ? "Claimable" : "You get"}
                   </p>
                   <p className="text-2xl font-bold text-white">
-                    {calculateTokens(ethAmount)} {presale.tokenInfo.symbol}
+                    {presaleFinalized
+                      ? formatCompactNumber(Number(purchasedTokens))
+                      : calculateTokens(ethAmount)}{" "}
+                    {presale.tokenInfo.symbol}
                   </p>
                 </div>
 
                 <Button
                   className="w-full bg-[#00E3A5] hover:bg-[#00C2FF] text-white"
                   size="lg"
-                  onClick={handleBuyTokens}
+                  onClick={
+                    presaleFinalized ? handleClaimTokens : handleBuyTokens
+                  }
                 >
-                  {isPending
-                    ? "Processing..."
-                    : waiting
-                      ? "Confirming..."
-                      : "Join Presale"}
+                  {presaleFinalized
+                    ? "Claim now"
+                    : isPending
+                      ? "Processing..."
+                      : waiting
+                        ? "Confirming..."
+                        : "Join Presale"}
                 </Button>
 
                 <div className="space-y-1 text-xs text-gray-400">

@@ -213,7 +213,7 @@ contract Presale is Ownable, ReentrancyGuard {
             "Presale hard cap reached"
         );
         require(
-            tokenAmount + s_totalSold < i_tokensForSaleUnits,
+            tokenAmount + s_totalSold <= i_tokensForSaleUnits,
             "Presale sold out"
         );
 
@@ -255,11 +255,11 @@ contract Presale is Ownable, ReentrancyGuard {
         );
         s_purchased[msg.sender] = 0;
 
-        // bool success = i_saleToken.transfer(msg.sender, userTokens);
-        // if (!success) {
-        //     revert Presale__CLAIMING_FAILED();
-        // }
-        i_saleToken.safeTransfer(msg.sender, userTokens);
+        bool success = i_saleToken.transfer(msg.sender, userTokens);
+        if (!success) {
+            revert Presale__CLAIMING_FAILED();
+        }
+        // i_saleToken.safeTransfer(msg.sender, userTokens);
 
         emit TokensClaimed(msg.sender, userTokens);
     }

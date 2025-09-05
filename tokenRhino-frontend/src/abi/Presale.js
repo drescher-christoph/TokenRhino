@@ -1,4 +1,4 @@
-export const PresaleAbi =[
+export const PresaleAbi = [
     {
       "type": "constructor",
       "inputs": [
@@ -444,12 +444,5 @@ export const PresaleAbi =[
     { "type": "error", "name": "Presale__PriceIsZero", "inputs": [] },
     { "type": "error", "name": "Presale__RefundFailed", "inputs": [] },
     { "type": "error", "name": "Presale__WithdrawFailed", "inputs": [] },
-    { "type": "error", "name": "ReentrancyGuardReentrantCall", "inputs": [] },
-    {
-      "type": "error",
-      "name": "SafeERC20FailedOperation",
-      "inputs": [
-        { "name": "token", "type": "address", "internalType": "address" }
-      ]
-    }
-  ]
+    { "type": "error", "name": "ReentrancyGuardReentrantCall", "inputs": [] }
+  ];

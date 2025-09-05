@@ -177,7 +177,10 @@ contract PresaleTest is Test {
         vm.stopPrank();
 
         uint256 tokensPerEth = presale.getTokenPerETH();
+        console.log("Tokens per ETH: ", tokensPerEth / 1e18);
         uint256 expectedTokens = (INVESTMENT * 10 * tokensPerEth) / PRECISION;
+        console.log("Expected Tokens: ", expectedTokens / 1e18);
+        console.log("User2 Tokens: ", token.balanceOf(USER2) / 1e18);
 
         uint256 userBalance = token.balanceOf(USER2);
         assertEq(

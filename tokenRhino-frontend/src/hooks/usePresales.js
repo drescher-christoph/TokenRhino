@@ -8,7 +8,7 @@ const token = "0f97fc83b69126dfea153b765e88f5f6";
 // --- Dein GraphQL Query ---
 const PRESALES_QUERY = gql`
   {
-    presales(first: 5) {
+    presales(first: 50, orderBy: createdAt, orderDirection: desc) {
       id
       creator
       token
