@@ -20,7 +20,7 @@ import { createPresaleMetadata } from "../lib/metadata";
 import { uploadJsonToPinata } from "../services/ipfsService";
 
 // === CONFIG ===
-const FACTORY_ADDRESS = "0x19CB3Db9e599d2b778AA123fD9BCD0C5704dd275"; // old, still funds in it "0x84210d715b99C9f3E67AE577890c0F96C75C883c"; subgraph v0.0.51
+const FACTORY_ADDRESS = "0x653266190Aa81eA4762246da64469ba7dA87E58C"; // old, still funds in it "0x84210d715b99C9f3E67AE577890c0F96C75C883c"; subgraph v0.0.51
 const REQUIRED_CHAIN_ID = 11155111; // z.B. Sepolia
 const CREATE_FEE_ETH = "0.01";
 

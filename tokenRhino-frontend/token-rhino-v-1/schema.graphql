@@ -67,6 +67,53 @@ type Token @entity(immutable: true) {
   decimals: Int
 }
 
+type User @entity(immutable: true) {
+  id: Bytes! # user address
+  totalInvested: BigInt!
+  investments: [Investment!]! @derivedFrom(field: "user")
+  claims: [Claim!]! @derivedFrom(field: "user")
+  refunds: [Refund!]! @derivedFrom(field: "user")
+}
+
+type Investment @entity(immutable: true) {
+  id: Bytes! # transaction hash + log index
+  user: User!
+  presale: Presale!
+  amountWei: BigInt!
+  amountEth: BigDecimal!
+  tokensBought: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  claimed: Boolean!
+  refunded: Boolean!
+  status: InvestmentStatus!
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  CLAIMABLE
+  REFUNDABLE
+  CLAIMED
+  REFUNDED
+}
+
+type Claim @entity(immutable: true) {
+  id: Bytes! # transaction hash + log index
+  user: User!
+  presale: Presale!
+  amountTokens: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type Refund @entity(immutable: true) {
+  id: Bytes! # transaction hash + log index
+  user: User!
+  presale: Presale!
+  amountTokens: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
 
 type Presale @entity(immutable: true) {
   id: Bytes! # presale contract address
@@ -96,5 +143,12 @@ type Presale @entity(immutable: true) {
   raised: BigInt        
   createdAtBlock: BigInt
   createdAtTimestamp: BigInt
+
+  # Neue Felder für Investments
+  totalInvestors: Int!
+  totalInvested: BigInt!
+  investments: [Investment!]! @derivedFrom(field: "presale")
+  claims: [Claim!]! @derivedFrom(field: "presale")
+  refunds: [Refund!]! @derivedFrom(field: "presale")
 
 }

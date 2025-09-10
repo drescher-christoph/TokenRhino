@@ -173,6 +173,8 @@ contract PresaleTest is Test {
     {
         skip(32 * 24 * 60 * 60);
         vm.startPrank(USER2);
+        console.log("User2 Tokens bought: ", presale.getUserBoughtTokens(USER2) / 1e18);
+        console.log("Presale token supply:", token.balanceOf(address(presale)) / 1e18);
         presale.claimTokens();
         vm.stopPrank();
 

@@ -8,9 +8,9 @@ dataSources:
     name: PresaleFactory
     network: sepolia
     source:
-      address: "0x19CB3Db9e599d2b778AA123fD9BCD0C5704dd275"
+      address: "0x653266190Aa81eA4762246da64469ba7dA87E58C"
       abi: PresaleFactory
-      startBlock: 9105009
+      startBlock: 9176543
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -65,8 +65,10 @@ templates:
         - name: Presale
           file: ./abis/Presale.json
       eventHandlers:
-        - event: TokensBought(indexed address,uint256)
+        - event: TokensBought(indexed address,uint256,uint256)
           handler: handleTokensBought
         - event: TokensClaimed(indexed address,uint256)
           handler: handleTokensClaimed
+        - event: TokensRefunded(indexed address,uint256)
+          handler: handleTokensRefunded
       file: ./src/presale-template.ts

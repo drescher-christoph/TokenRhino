@@ -20,7 +20,7 @@ import {
 } from "../generated/schema"
 import { ERC20 } from "../generated/PresaleFactory/ERC20"
 import { Presale as PresaleTemplate } from "../generated/PresaleFactory/Presale"
-import { Bytes, Address } from "@graphprotocol/graph-ts"
+import { Bytes, Address, BigInt } from "@graphprotocol/graph-ts"
 
 export function handleCreateFeePaid(event: CreateFeePaidEvent): void {
   let entity = new CreateFeePaid(
@@ -164,6 +164,8 @@ export function handlePresaleCreated(event: PresaleCreatedEvent): void {
   presale.presale = event.params.presale
   presale.createdAt = event.block.timestamp
   presale.factoryEvent = entity.id
+  presale.totalInvestors = 0
+  presale.totalInvested = BigInt.zero()
 
   if (token !== null) {
     presale.tokenInfo = token.id

@@ -349,7 +349,13 @@
           "internalType": "address"
         },
         {
-          "name": "amount",
+          "name": "amountWei",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokens",
           "type": "uint256",
           "indexed": false,
           "internalType": "uint256"
@@ -368,7 +374,26 @@
           "internalType": "address"
         },
         {
-          "name": "amount",
+          "name": "amountTokens",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "TokensRefunded",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amountTokens",
           "type": "uint256",
           "indexed": false,
           "internalType": "uint256"

@@ -99,8 +99,9 @@ contract Presale is Ownable, ReentrancyGuard {
     ///////////////////
     // Events /////////
     ///////////////////
-    event TokensBought(address indexed buyer, uint256 amount);
-    event TokensClaimed(address indexed user, uint256 amount);
+    event TokensBought(address indexed buyer, uint256 amountWei, uint256 amountTokens);
+    event TokensClaimed(address indexed user, uint256 amountTokens);
+    event TokensRefunded(address indexed user, uint256 amountTokens);
 
     ///////////////////
     // Modifier ///////
@@ -207,7 +208,7 @@ contract Presale is Ownable, ReentrancyGuard {
         nonReentrant
     {
         _updateStatus();
-        uint256 tokenAmount = (msg.value * i_TOKENS_PER_ETH) / PRECISION;
+        uint256 tokenAmount = (msg.value * i_TOKENS_PER_ETH) / 1e18;
         require(
             s_totalRaisedWei + msg.value <= i_hardCapWei,
             "Presale hard cap reached"
@@ -223,7 +224,8 @@ contract Presale is Ownable, ReentrancyGuard {
         s_totalSold += tokenAmount;
         emit TokensBought(
             msg.sender,
-            (msg.value * i_TOKENS_PER_ETH) / PRECISION
+            (msg.value * i_TOKENS_PER_ETH) / PRECISION,
+            tokenAmount
         );
 
         uint256 fee = (msg.value * i_fee) / 10_000;
@@ -249,13 +251,14 @@ contract Presale is Ownable, ReentrancyGuard {
             revert Presale__NoTokensToClaim();
         }
         uint256 userTokens = s_purchased[msg.sender];
+        uint256 tokensAmountScaled = userTokens * PRECISION;
         require(
             i_saleToken.balanceOf(address(this)) >= userTokens,
             "insufficient escrow"
         );
         s_purchased[msg.sender] = 0;
 
-        bool success = i_saleToken.transfer(msg.sender, userTokens);
+        bool success = i_saleToken.transfer(msg.sender, tokensAmountScaled);
         if (!success) {
             revert Presale__CLAIMING_FAILED();
         }
@@ -283,12 +286,16 @@ contract Presale is Ownable, ReentrancyGuard {
 
     function refund() external checkedState(PresaleState.REFUNDABLE) {
         uint256 refundableAmount = s_contributedWei[msg.sender];
-        require(refundableAmount > 0, "The user doesn't have any refundable funds");
+        require(
+            refundableAmount > 0,
+            "The user doesn't have any refundable funds"
+        );
         s_contributedWei[msg.sender] = 0;
-        (bool success,) = msg.sender.call{value: refundableAmount}("");
+        (bool success, ) = msg.sender.call{value: refundableAmount}("");
         if (!success) {
             revert Presale__RefundFailed();
         }
+        emit TokensRefunded(msg.sender, refundableAmount);
     }
 
     /////////////////////////////////////
