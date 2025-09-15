@@ -267,7 +267,7 @@ const PresaleDetail = () => {
   console.log("Presale Metadara:", metadata);
 
   return (
-    <div className="min-h-screen bg-[#0F1117] mt-24 p-4 md:p-6">
+    <div className="min-h-screen bg-[#0F1117] p-4 md:p-6">
       <div className="mx-auto max-w-7xl">
         {/* Header Section */}
         <Card className="mb-6 bg-[#161B22] border border-[#23272F]">
