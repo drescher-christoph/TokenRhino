@@ -106,7 +106,7 @@ const TokenCard = ({
       state={{ presaleData: presaleData }}
       className="presale-card-link"
     >
-      <div className="bg-[#161B22] border border-[#23272F] rounded-2xl p-5 shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 ease-in-out w-full max-w-sm">
+      <div className="bg-[#161B22] border border-[#23272F] mx-auto rounded-2xl p-5 shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 ease-in-out w-full max-w-sm">
         {/* Token Logo + Name */}
         <div className="flex items-center gap-3">
           <img
@@ -126,18 +126,18 @@ const TokenCard = ({
             {typeof price === "number" ? formatCompactNumber(price) : price} /
             ETH
           </p>
-          <p className={`font-semibold ${changeColor}`}>
+          {/* <p className={`font-semibold ${changeColor}`}>
             {change > 0 ? "+" : ""}
             {change}%
-          </p>
+          </p> */}
         </div>
 
         {/* Presale Progress */}
         <div className="mt-4">
           <div className="flex justify-between mb-1">
-            <span className="text-gray-400 text-xs">Raised </span>
+            <span className="text-gray-400 text-xs">Progress </span>
             <span className="text-gray-400 text-xs">
-              {formatCompactNumber(raisedEth)} / {goal}
+              {progress.toFixed(1)}%
             </span>
           </div>
           <div className="w-full bg-[#1A1D24] rounded-full h-2">
@@ -146,14 +146,15 @@ const TokenCard = ({
               style={{ width: `${progress}%` }}
             ></div>
           </div>
-          <div className="flex justify-end text-xs text-gray-400 mt-1">
-            <span>{progress.toFixed(1)}% Complete</span>
+          <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <span>Raised {formatCompactNumber(raisedEth)} ETH</span>
+            <span>Hardcap: {goal}</span>
           </div>
         </div>
 
         <div className="mt-5 w-full flex flex-row justify-between items-center">
           <Badge color={statusColor(state)}>{presaleStates[presaleState]}</Badge>
-          <Badge color="indigo">{timeRemaining(Number(endTime) * 1000)}</Badge>
+          <Badge color="indigo">{presaleFinalized ? "Finalized" : timeRemaining(Number(endTime) * 1000)}</Badge>
         </div>
       </div>
     </Link>

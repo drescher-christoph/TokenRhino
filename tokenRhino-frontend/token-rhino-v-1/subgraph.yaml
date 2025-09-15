@@ -25,6 +25,10 @@ dataSources:
         - PresaleCreated
         - Presale
         - Token
+        - User
+        - Investment
+        - Claim
+        - Refund
       abis:
         - name: PresaleFactory
           file: ./abis/PresaleFactory.json
@@ -61,6 +65,10 @@ templates:
       language: wasm/assemblyscript
       entities:
         - Presale
+        - User
+        - Investment
+        - Claim
+        - Refund
       abis:
         - name: Presale
           file: ./abis/Presale.json

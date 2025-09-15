@@ -10,10 +10,11 @@ const Home = () => {
   const { data: presales = [], isLoading, error } = usePresales()
   console.log('data:', presales, 'error:', error)
 
+  // Coming soon
   const handleFilterChange = () => {}
 
   return (
-    <div className="mx-auto max-w-7xl px-4 mt-38 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 mt-20 md:mt-28 sm:px-6 lg:px-8">
       {/* HERO SECTION */}
       <div className="flex flex-col justify-center items-center mb-10">
         <div className="text-center space-y-4 mt-8">
@@ -32,7 +33,7 @@ const Home = () => {
       </div>
 
       {/* Presale Token Listings */}
-      <div className="grid grid-cols-4 gap-4 text-white">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 text-white">
         {isLoading && (
           <div className="col-span-4 text-center">Loading presales...</div>
         )}

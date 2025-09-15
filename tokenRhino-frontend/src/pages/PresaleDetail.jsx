@@ -32,6 +32,7 @@ import {
 
 const PresaleDetail = () => {
   const [ethAmount, setEthAmount] = useState("");
+  const [raisedDirect, setRaisedDirect] = useState(null);
 
   const account = useAccount();
   const {
@@ -52,9 +53,6 @@ const PresaleDetail = () => {
     loading: metadataLoading,
     error: metadataError,
   } = usePresaleMetadata(presale?.metadataCID, presale?.token);
-  const [amount, setAmount] = useState("");
-
-  const [raisedDirect, setRaisedDirect] = useState(null);
 
   const { data: contributedWei } = useReadContract({
     address: presale?.id,
@@ -250,6 +248,24 @@ const PresaleDetail = () => {
     }
   };
 
+  const handleWithdrawFunds = () => {
+    if (!walletIsConnected) {
+      alert("Please connect your wallet first.");
+      return;
+    }
+    try {
+      writeContract({
+        address: presale.id,
+        abi: PresaleAbi,
+        functionName: "withdrawFunds"
+      });
+    } catch (err) {
+      console.error("Error withdrawing funds:", err);
+    }
+  }
+
+  console.log("Presale Metadara:", metadata);
+
   return (
     <div className="min-h-screen bg-[#0F1117] mt-24 p-4 md:p-6">
       <div className="mx-auto max-w-7xl">
@@ -298,6 +314,7 @@ const PresaleDetail = () => {
                   variant="outline"
                   size="icon"
                   className="border-[#23272F] text-gray-400 hover:bg-[#858a94] bg-[#0F1117]"
+                  onClick={() => window.open(metadata.socials.twitter, "_blank")}
                 >
                   <Twitter className="h-4 w-4" />
                 </Button>
@@ -305,6 +322,7 @@ const PresaleDetail = () => {
                   variant="outline"
                   size="icon"
                   className="border-[#23272F] text-gray-400 hover:bg-[#858a94] bg-[#0F1117]"
+                  onClick={() => window.open(metadata.socials.telegram, "_blank")}
                 >
                   <MessageCircle className="h-4 w-4" />
                 </Button>
@@ -312,6 +330,7 @@ const PresaleDetail = () => {
                   variant="outline"
                   size="icon"
                   className="border-[#23272F] text-gray-400 hover:bg-[#858a94] bg-[#0F1117]"
+                  onClick={() => window.open(metadata.socials.website, "_blank")}
                 >
                   <Globe className="h-4 w-4" />
                 </Button>
@@ -321,7 +340,7 @@ const PresaleDetail = () => {
         </Card>
 
         {/* Main Content - Two Columns */}
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:grid-cols-3">
           {/* Left Column - Token Information */}
           <div className="space-y-6 lg:col-span-2">
             {/* Presale Info Card */}
@@ -469,12 +488,20 @@ const PresaleDetail = () => {
             <Card className="sticky top-6 bg-[#161B22] border border-[#23272F]">
               <CardHeader>
                 <CardTitle className="text-white">
-                  {presaleFinalized ? "Claim Token" : "Join Presale"}
+                  {presaleFinalized &&
+                  account.address.toLowerCase() === presale.creator
+                    ? "Withdraw Funds"
+                    : presaleFinalized
+                      ? "Claim Tokens"
+                      : "Join Presale"}
                 </CardTitle>
                 <p className="text-sm text-gray-400">
-                  {presaleFinalized
-                    ? `Invested: ${contributedWei ? ethers.formatEther(contributedWei) : "0"} ETH`
-                    : `Balance: ${balance ? ethers.formatUnits(balance.value).slice(0, 4) : 0} ETH`}
+                  {presaleFinalized &&
+                  account.address.toLowerCase() === presale.creator
+                    ? `Your presale was successful! Withdraw the raised ETH to your wallet.`
+                    : presaleFinalized
+                      ? `Invested: ${contributedWei ? ethers.formatEther(contributedWei) : "0"} ETH`
+                      : `Balance: ${balance ? ethers.formatUnits(balance.value).slice(0, 4) : 0} ETH`}
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -513,13 +540,20 @@ const PresaleDetail = () => {
 
                 <div className="space-y-2">
                   <p className="text-sm text-gray-400">
-                    {presaleFinalized ? "Claimable" : "You get"}
+                    {presaleFinalized &&
+                    account.address.toLowerCase() === presale.creator
+                      ? "Funds available"
+                      : presaleFinalized
+                        ? "Claimable"
+                        : "You get"}
                   </p>
                   <p className="text-2xl font-bold text-white">
-                    {presaleFinalized
-                      ? formatCompactNumber(Number(purchasedTokens))
-                      : calculateTokens(ethAmount)}{" "}
-                    {presale.tokenInfo.symbol}
+                    {presaleFinalized &&
+                    account.address.toLowerCase() === presale.creator
+                      ? `${ethers.formatUnits(raisedDirect)} ETH`
+                      : presaleFinalized
+                        ? `${formatCompactNumber(Number(purchasedTokens))} ${presale.tokenInfo.symbol}`
+                        : `${calculateTokens(ethAmount)} ${presale.tokenInfo.symbol}`}
                   </p>
                 </div>
 
@@ -527,7 +561,7 @@ const PresaleDetail = () => {
                   className="w-full bg-[#00E3A5] hover:bg-[#00C2FF] text-white"
                   size="lg"
                   onClick={
-                    presaleFinalized ? handleClaimTokens : handleBuyTokens
+                    presaleFinalized && account.address.toLowerCase() === presale.creator ? handleWithdrawFunds : presaleFinalized ? handleClaimTokens : handleBuyTokens
                   }
                 >
                   {presaleFinalized

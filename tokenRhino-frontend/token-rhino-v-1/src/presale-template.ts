@@ -10,15 +10,38 @@ import {
   Claim, 
   Refund 
 } from "../generated/schema"
-import { BigInt, BigDecimal, Bytes } from "@graphprotocol/graph-ts"
+import { BigInt, BigDecimal, Bytes, log } from "@graphprotocol/graph-ts"
+
+// Füge diese Funktion hinzu:
+function getInvestmentStatus(presale: Presale): string {
+  if (presale.finalized) {
+    return "CLAIMABLE";
+  } else if (presale.state == 3) { // FAILED state
+    return "REFUNDABLE";
+  } else {
+    return "ACTIVE";
+  }
+}
+
 
 export function handleTokensBought(event: TokensBoughtEvent): void {
-  // User erstellen oder laden
-  let user = User.load(event.params.buyer)
+  
+  log.info("TokensBought event received: buyer={}, amountWei={}", [
+    event.params.buyer.toHexString(),
+    event.params.amountWei.toString()
+  ])
+
+  let userId = event.params.buyer
+  let user = User.load(userId)
+
+  log.info("User loaded: {}", [user ? user.id.toHexString() : "null"])
+
   if (user == null) {
-    user = new User(event.params.buyer)
+    log.info("Creating new user: {}", [userId.toHexString()])
+    user = new User(userId)
     user.totalInvested = BigInt.zero()
     user.save()
+    log.info("User created successfully: {}", [userId.toHexString()])
   }
 
   // Presale laden
@@ -38,7 +61,7 @@ export function handleTokensBought(event: TokensBoughtEvent): void {
   investment.blockNumber = event.block.number
   investment.claimed = false
   investment.refunded = false
-  investment.status = "ACTIVE"
+  investment.status = getInvestmentStatus(presale);
   
   investment.save()
 
