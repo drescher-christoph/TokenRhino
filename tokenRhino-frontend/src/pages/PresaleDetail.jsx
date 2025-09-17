@@ -3,6 +3,7 @@ import { usePresale } from "../hooks/usePresale";
 import { usePresaleMetadata } from "../hooks/usePresaleMetadata";
 import { use, useEffect, useState } from "react";
 import { PresaleAbi } from "../abi/Presale";
+import { erc20Abi } from "viem";
 import { formatUnixTime } from "../lib/time";
 import { ethers } from "ethers";
 import {
@@ -102,6 +103,13 @@ const PresaleDetail = () => {
     functionName: "s_totalSold",
     watch: true,
     enabled: !!presale?.id && !!account?.address,
+  });
+
+  const { data: tokenBalanceOfPresale } = useReadContract({
+    address: presale?.token,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [presale?.id],
   });
 
   const quickAmounts = ["Min", "0.1", "1", "5", "Max"];
@@ -257,17 +265,56 @@ const PresaleDetail = () => {
       writeContract({
         address: presale.id,
         abi: PresaleAbi,
-        functionName: "withdrawFunds"
+        functionName: "withdrawFunds",
       });
     } catch (err) {
       console.error("Error withdrawing funds:", err);
     }
-  }
+  };
+
+  const handleFundPresale = async () => {
+    if (!walletIsConnected) {
+      alert("Please connect your wallet first.");
+      return;
+    }
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      // Token Contract Adresse aus presaleData
+      const tokenAddress = presale?.token;
+      const tokenDecimals = presale?.tokenInfo?.decimals ?? 18;
+      const presaleAddress = presale?.id;
+
+      console.log("token Address:", tokenAddress);
+      console.log("Token Decimals:", tokenDecimals);
+      console.log("Presale Address:", presaleAddress);
+
+      if (!tokenAddress || !presaleAddress) {
+        throw new Error("Token or Presale Address missing!");
+      }
+
+      const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
+
+      // Menge berechnen (z. B. Hardcap oder vorher gespeicherte Amounts)
+      const fundAmount = ethers.parseUnits(
+        presale?.tokensForSaleUnits?.toString() || "0",
+        tokenDecimals
+      );
+      console.log("Funding Amount (in smallest units):", fundAmount.toString());
+
+      // Transfer starten
+      const tx = await tokenContract.transfer(presaleAddress, fundAmount);
+      await tx.wait();
+    } catch (err) {
+      alert("There was a problem funding your presale: ", err.message);
+    }
+  };
 
   console.log("Presale Metadara:", metadata);
 
   return (
-    <div className="min-h-screen bg-[#0F1117] p-4 md:p-6">
+    <div className="min-h-screen bg-[#0F1117] mt-21 sm:mt-21 md:mt-0 lg:mt-0 xl:mt-0 sm-0 p-4 md:p-6">
       <div className="mx-auto max-w-7xl">
         {/* Header Section */}
         <Card className="mb-6 bg-[#161B22] border border-[#23272F]">
@@ -314,7 +361,9 @@ const PresaleDetail = () => {
                   variant="outline"
                   size="icon"
                   className="border-[#23272F] text-gray-400 hover:bg-[#858a94] bg-[#0F1117]"
-                  onClick={() => window.open(metadata.socials.twitter, "_blank")}
+                  onClick={() =>
+                    window.open(metadata.socials.twitter, "_blank")
+                  }
                 >
                   <Twitter className="h-4 w-4" />
                 </Button>
@@ -322,7 +371,9 @@ const PresaleDetail = () => {
                   variant="outline"
                   size="icon"
                   className="border-[#23272F] text-gray-400 hover:bg-[#858a94] bg-[#0F1117]"
-                  onClick={() => window.open(metadata.socials.telegram, "_blank")}
+                  onClick={() =>
+                    window.open(metadata.socials.telegram, "_blank")
+                  }
                 >
                   <MessageCircle className="h-4 w-4" />
                 </Button>
@@ -330,7 +381,9 @@ const PresaleDetail = () => {
                   variant="outline"
                   size="icon"
                   className="border-[#23272F] text-gray-400 hover:bg-[#858a94] bg-[#0F1117]"
-                  onClick={() => window.open(metadata.socials.website, "_blank")}
+                  onClick={() =>
+                    window.open(metadata.socials.website, "_blank")
+                  }
                 >
                   <Globe className="h-4 w-4" />
                 </Button>
@@ -488,24 +541,30 @@ const PresaleDetail = () => {
             <Card className="sticky top-6 bg-[#161B22] border border-[#23272F]">
               <CardHeader>
                 <CardTitle className="text-white">
-                  {presaleFinalized &&
-                  account.address.toLowerCase() === presale.creator
-                    ? "Withdraw Funds"
-                    : presaleFinalized
-                      ? "Claim Tokens"
-                      : "Join Presale"}
+                  {tokenBalanceOfPresale == 0 && !presaleFinalized
+                    ? "Not funded yet"
+                    : presaleFinalized &&
+                        account.address.toLowerCase() === presale.creator
+                      ? "Withdraw Funds"
+                      : presaleFinalized
+                        ? "Claim Tokens"
+                        : "Join Presale"}
                 </CardTitle>
                 <p className="text-sm text-gray-400">
-                  {presaleFinalized &&
-                  account.address.toLowerCase() === presale.creator
-                    ? `Your presale was successful! Withdraw the raised ETH to your wallet.`
-                    : presaleFinalized
-                      ? `Invested: ${contributedWei ? ethers.formatEther(contributedWei) : "0"} ETH`
-                      : `Balance: ${balance ? ethers.formatUnits(balance.value).slice(0, 4) : 0} ETH`}
+                  {tokenBalanceOfPresale == 0 && !presaleFinalized
+                    ? "No investments available until the presale is funded"
+                    : presaleFinalized &&
+                        account.address.toLowerCase() === presale.creator
+                      ? `Your presale was successful! Withdraw the raised ETH to your wallet.`
+                      : presaleFinalized
+                        ? `Invested: ${contributedWei ? ethers.formatEther(contributedWei) : "0"} ETH`
+                        : `Balance: ${balance ? ethers.formatUnits(balance.value).slice(0, 4) : 0} ETH`}
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
-                {!presaleFinalized && (
+                {tokenBalanceOfPresale == 0 ? (
+                  ""
+                ) : !presaleFinalized ? (
                   <>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-white">
@@ -534,6 +593,8 @@ const PresaleDetail = () => {
                       ))}
                     </div>
                   </>
+                ) : (
+                  ""
                 )}
 
                 <Separator className="bg-[#23272F]" />
@@ -543,17 +604,25 @@ const PresaleDetail = () => {
                     {presaleFinalized &&
                     account.address.toLowerCase() === presale.creator
                       ? "Funds available"
-                      : presaleFinalized
-                        ? "Claimable"
-                        : "You get"}
+                      : tokenBalanceOfPresale == 0 &&
+                          account.address.toLowerCase() === presale.creator
+                        ? "You have to fund"
+                        : tokenBalanceOfPresale == 0
+                          ? ""
+                          : presaleFinalized
+                            ? "Claimable"
+                            : "You get"}
                   </p>
                   <p className="text-2xl font-bold text-white">
-                    {presaleFinalized &&
+                    {tokenBalanceOfPresale == 0 &&
                     account.address.toLowerCase() === presale.creator
-                      ? `${ethers.formatUnits(raisedDirect)} ETH`
-                      : presaleFinalized
-                        ? `${formatCompactNumber(Number(purchasedTokens))} ${presale.tokenInfo.symbol}`
-                        : `${calculateTokens(ethAmount)} ${presale.tokenInfo.symbol}`}
+                      ? `${formatCompactNumber(Number(presale.tokensForSaleUnits))} ${presale.tokenInfo.symbol}`
+                      : presaleFinalized &&
+                          account.address.toLowerCase() === presale.creator
+                        ? `${raisedDirect ? ethers.formatUnits(raisedDirect) : "0"} ETH`
+                        : presaleFinalized
+                          ? `${formatCompactNumber(Number(purchasedTokens))} ${presale.tokenInfo.symbol}`
+                          : `${calculateTokens(ethAmount)} ${presale.tokenInfo.symbol}`}
                   </p>
                 </div>
 
@@ -561,16 +630,25 @@ const PresaleDetail = () => {
                   className="w-full bg-[#00E3A5] hover:bg-[#00C2FF] text-white"
                   size="lg"
                   onClick={
-                    presaleFinalized && account.address.toLowerCase() === presale.creator ? handleWithdrawFunds : presaleFinalized ? handleClaimTokens : handleBuyTokens
+                    tokenBalanceOfPresale == 0 && account.address.toLowerCase() === presale.creator ?
+                    handleFundPresale :
+                    presaleFinalized &&
+                    account.address.toLowerCase() === presale.creator
+                      ? handleWithdrawFunds
+                      : presaleFinalized
+                        ? handleClaimTokens
+                        : handleBuyTokens
                   }
                 >
-                  {presaleFinalized
-                    ? "Claim now"
-                    : isPending
-                      ? "Processing..."
-                      : waiting
-                        ? "Confirming..."
-                        : "Join Presale"}
+                  {tokenBalanceOfPresale == 0
+                    ? "Fund now"
+                    : presaleFinalized
+                      ? "Claim now"
+                      : isPending
+                        ? "Processing..."
+                        : waiting
+                          ? "Confirming..."
+                          : "Join Presale"}
                 </Button>
 
                 <div className="space-y-1 text-xs text-gray-400">

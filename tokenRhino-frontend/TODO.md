@@ -6,10 +6,9 @@ TokenRhino ist eine Plattform für Token-Presales, die es Nutzern ermöglicht, f
 ## 🚀 Aktuelle Prioritäten
 - [ ] Buy Token UX verbessern
 - [ ] Portfolio User Investments implementieren mit Deepseek Anleitung
-- [ ] Improve reponsive design
-- [ ] Check which information of presale is important to be always up to date, example: presale state from the subgraph is not up to date which is problematic
 - [ ] solve timing issue: standard 31 days run time (remove timing options) or individual time setting (change presale and factory)
-- [ ] Error Handling & Solution if contract is unfunded - or filter
+- [ ] Mobile Datenprobleme -> Daten nur mit useEffect abfragen
+- [ ] Reload-Problem -> Rewrite Regeln für Vercel
 
 ## 🚀 Next steps
 - [ ] Ausführliches Subgraph Tutorial (ChatGPT) und Subgraph Query Tutorial (Deepseek) machen
